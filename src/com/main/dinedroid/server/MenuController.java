@@ -137,6 +137,7 @@ public class MenuController implements Runnable {
 			ObjectInputStream is = new ObjectInputStream(
 					new FileInputStream("menu.dat"));
 			menu = (Menu)is.readObject();
+			menu.setParent();
 			is.close();
 			return true;
 
