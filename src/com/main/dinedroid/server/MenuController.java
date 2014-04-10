@@ -38,7 +38,7 @@ public class MenuController implements Runnable {
 		return menu;
 	}
 	
-	public boolean setAvailability(int itemId, boolean availability)
+	public  boolean setAvailability(int itemId, boolean availability)
 	{
 		FoodItem item = menu.findItem(itemId);
 		if(item == null)
@@ -77,16 +77,6 @@ public class MenuController implements Runnable {
 		//saveExtras();
 		callChangedListeners("Extra");
 	}
-
-
-
-
-
-
-
-
-
-
 
 	public boolean saveIdCounter() {
 		try {

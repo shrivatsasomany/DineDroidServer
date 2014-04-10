@@ -102,6 +102,9 @@ public class Table implements Serializable {
 		return true;
 	}
 	
-	
+	public String toString()
+	{
+		return "Table Number: " + id;
+	}
 	
 }
