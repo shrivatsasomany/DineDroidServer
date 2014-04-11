@@ -36,6 +36,10 @@ public class TableCommunicationsController implements Runnable {
 				main.tc.openTable(tableId, customerName);
 			}
 		}
+		if(commands[1].equals("Open_Temp_Table"))
+		{
+			main.tc.createTempTable(); /* Also opens*/
+		}
 		else if(commands[1].equals("Close_Table"))
 		{
 			int tableId = Integer.parseInt(commands[2]);

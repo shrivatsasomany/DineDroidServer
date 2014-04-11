@@ -31,9 +31,9 @@ public class TablesController implements Runnable {
 		if(findTable(tableId) == null)
 		{
 			Table e = new Table(tableId);
-			saveTables();
 			callChangedListeners("Table");
 			boolean result =  tables.add(e);
+			saveTables();
 			return result;
 		}
 		return false;
@@ -43,10 +43,10 @@ public class TablesController implements Runnable {
 	{
 		/* TEMP tables have id > 1000 */
 		Table e = new Table(tempTableId);
-		++tempTableId;
-		callChangedListeners("Table");
 		boolean result =  tables.add(e);
+		openTable(e.getId());
 		callChangedListeners("Table");
+		++tempTableId;
 		return result;
 	}
 
@@ -79,6 +79,7 @@ public class TablesController implements Runnable {
 		if(t != null)
 		{
 			t.setOccupied(true);
+			callChangedListeners("Table");
 			return true;
 		}
 		return false;
@@ -103,9 +104,7 @@ public class TablesController implements Runnable {
 		{
 			if(t.getOrder() != null)
 			{
-				closeTableOrder(t.getOrder());
-				t.setOrder(null);
-				t.setOrderStatus(null);
+				closeTableOrder(t.getId());
 			}
 			t.setOccupied(false);
 			Waiter w = t.getWaiter();
@@ -129,19 +128,24 @@ public class TablesController implements Runnable {
 	public synchronized boolean setTableOrder(int tableId, Order order)
 	{
 		Table t = findTable(tableId);
-		order.setOrderTable(t);
+		order.setOrderTable(tableId);
 		if(t != null)
 		{
 			t.setOrder(order);
+			callChangedListeners("Order");
 			return true;
 		}
 		return false;	
 	}
 
-	public boolean closeTableOrder(Order order)
+	public boolean closeTableOrder(int tableId)
 	{
+		Table t = findTable(tableId);
+		Order order = t.getOrder();
 		double price = getTotal(order);
 		System.err.println("Price of order: " + price);
+		removeTableOrder(tableId);
+		callChangedListeners("Order");
 		return true;
 	}
 
@@ -149,6 +153,7 @@ public class TablesController implements Runnable {
 	{
 		Table t = findTable(tableId);
 		t.setOrder(null);
+		t.setOrderStatus(null);
 	}
 
 	public boolean setOrderStatus(int tableId, int status)

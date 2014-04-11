@@ -641,7 +641,7 @@ public class MainServerGUI extends CascadingJFrame {
 						JList temp = (JList) e.getSource();
 						selectedOrder = (Order) temp.getSelectedValue();
 						if (e.getClickCount() == 2) {
-							JOptionPane.showMessageDialog(null, selectedOrder);
+							JOptionPane.showMessageDialog(null, selectedOrder.detailedString());
 						}
 					}
 
@@ -652,8 +652,7 @@ public class MainServerGUI extends CascadingJFrame {
 						JList temp = (JList) e.getSource();
 						selectedOrder = (Order) temp.getSelectedValue();
 						if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-							tc.removeTableOrder(selectedOrder.getOrderTable()
-									.getId());
+							tc.removeTableOrder(selectedOrder.getOrderTable());
 							refreshOrders();
 						}
 					}
@@ -670,7 +669,17 @@ public class MainServerGUI extends CascadingJFrame {
 		if (jScrollPane4 == null) {
 			waiterList = new JList();
 			waiterList.setToolTipText("Double-click to remove");
+			waiterList.addMouseListener(new java.awt.event.MouseAdapter() {
+				@Override
+				public void mouseClicked(java.awt.event.MouseEvent e) {
+					JList temp = (JList) e.getSource();
+					Waiter selectedWaiter = (Waiter) temp.getSelectedValue();
+					if (e.getClickCount() == 2) {
+						generateQR(selectedWaiter.getId());
+					}
+				}
 
+			});
 			waiterList.addKeyListener(new java.awt.event.KeyAdapter() {
 				@Override
 				public void keyReleased(java.awt.event.KeyEvent e) {
@@ -871,7 +880,7 @@ public class MainServerGUI extends CascadingJFrame {
 					JList temp = (JList) e.getSource();
 					Table selectedTable = (Table) temp.getSelectedValue();
 					if (e.getClickCount() == 2) {
-						generateTableQR(selectedTable.getId());
+						generateQR(selectedTable.getId());
 					}
 				}
 
@@ -960,12 +969,10 @@ public class MainServerGUI extends CascadingJFrame {
 		wc.saveIdCounter();
 	}
 
-	public void generateTableQR(int tableNum) {
-		String myCodeText = tableNum + "";
-		String filePath = "Table " + tableNum + ".png";
+	public void generateQR(int id) {
+		String myCodeText = id + "";
 		int size = 125;
 		String fileType = "png";
-		File myFile = new File(filePath);
 		try {
 			Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
 			hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
