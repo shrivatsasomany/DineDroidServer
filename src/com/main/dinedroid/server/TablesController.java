@@ -25,7 +25,7 @@ public class TablesController implements Runnable {
 		loadTables();
 		System.err.println("Loaded " + tables.size() + " tables");
 	}
-	
+
 	/**
 	 * Used only to roll back an unrecoverable table
 	 * @param t
@@ -73,7 +73,10 @@ public class TablesController implements Runnable {
 		//remove table from DB if NOT temporary
 		Table e = findTable(tableId);
 		boolean result = tables.remove(e);
-		main.wc.unassignWaiter(e.getWaiter().getId(), tableId);
+		if(e.getWaiter()!=null)
+		{
+			main.wc.unassignWaiter(e.getWaiter().getId(), tableId);
+		}
 		saveTables();
 		callChangedListeners("Table");
 		return result;
