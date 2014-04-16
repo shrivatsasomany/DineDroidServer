@@ -643,6 +643,10 @@ public class MainServerGUI extends CascadingJFrame {
 						if (e.getClickCount() == 2) {
 							JOptionPane.showMessageDialog(null, selectedOrder.detailedString());
 						}
+						if(e.isShiftDown())
+						{
+							main.tc.closeTableOrder(selectedOrder.getOrderTable());
+						}
 					}
 
 				});
@@ -675,7 +679,7 @@ public class MainServerGUI extends CascadingJFrame {
 					JList temp = (JList) e.getSource();
 					Waiter selectedWaiter = (Waiter) temp.getSelectedValue();
 					if (e.getClickCount() == 2) {
-						generateQR(selectedWaiter.getId());
+						generateQR("Waiter",selectedWaiter.getId());
 					}
 				}
 
@@ -880,7 +884,7 @@ public class MainServerGUI extends CascadingJFrame {
 					JList temp = (JList) e.getSource();
 					Table selectedTable = (Table) temp.getSelectedValue();
 					if (e.getClickCount() == 2) {
-						generateQR(selectedTable.getId());
+						generateQR("Table", selectedTable.getId());
 					}
 				}
 
@@ -969,8 +973,8 @@ public class MainServerGUI extends CascadingJFrame {
 		wc.saveIdCounter();
 	}
 
-	public void generateQR(int id) {
-		String myCodeText = id + "";
+	public void generateQR(String type, int id) {
+		String myCodeText = type+"||"+id;
 		int size = 125;
 		String fileType = "png";
 		try {

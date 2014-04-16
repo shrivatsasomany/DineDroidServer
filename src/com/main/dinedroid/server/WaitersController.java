@@ -7,6 +7,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
+import javax.swing.JOptionPane;
+
 import com.main.dinedroid.models.Table;
 import com.main.dinedroid.models.Waiter;
 import com.main.dinedroid.serverlistener.TableChangeListener;
@@ -26,7 +28,7 @@ public class WaitersController implements Runnable
 		loadIdCounter();
 		loadWaiters();
 	}
-	
+
 	public boolean createWaiter(String fname, String lname) /* String name */
 	{
 		boolean result = waiters.add(new Waiter(latestId, fname, lname));
@@ -36,7 +38,7 @@ public class WaitersController implements Runnable
 		saveWaiters();
 		return result;
 	}
-	
+
 	public boolean removeWater(int id) /* int WaiterId */
 	{
 		Waiter e = findWaiter(id);
@@ -46,7 +48,7 @@ public class WaitersController implements Runnable
 		return result;
 		/*update db*/
 	}
-	
+
 	public Waiter findWaiter(int waiterId)
 	{
 		for(Waiter w:waiters)
@@ -58,14 +60,19 @@ public class WaitersController implements Runnable
 		}
 		return null;
 	}
-	
+
 	public synchronized boolean hailWaiter(int tableId)
 	{
 		Table t = main.tc.findTable(tableId);
-		Waiter w = t.getWaiter();
-		return w.addHail(t);
+		if(t!=null)
+		{
+			Waiter w = t.getWaiter();
+			JOptionPane.showMessageDialog(null, "Table "+tableId+" Hailed "+w.getFName());
+			return w.addHail(t);
+		}
+		return false;
 	}
-	
+
 	public synchronized boolean removeQueueTable(int tableId, int waiterId)
 	{
 		Waiter w = findWaiter(waiterId);
@@ -75,7 +82,7 @@ public class WaitersController implements Runnable
 		}
 		return false;
 	}
-	
+
 	public ArrayList<Table> getQueue(int waiterId)
 	{
 		Waiter w = findWaiter(waiterId);
@@ -85,21 +92,37 @@ public class WaitersController implements Runnable
 		}
 		return null;
 	}
-	
+
+	public boolean unassignWaiter(int waiterId, int tableId)
+	{
+		Waiter w = findWaiter(waiterId);
+		if(w != null)
+		{
+			callChangedListeners("Waiter");
+			return (w.removeTable(tableId));
+		}
+		else
+		{
+			return false;
+		}
+
+	}
+
 	public boolean assignWaiter(int tableId, int waiterId)
 	{
 		Table t = main.tc.findTable(tableId);
 		Waiter w = findWaiter(waiterId);
-		
+
 		if(w != null)
 		{
 			t.setWaiter(w);
 			w.addTable(t);
+			callChangedListeners("Waiter");
 			return true;
 		}
 		return false;
 	}
-	
+
 	public ArrayList<Table> getAssignedTables(int waiterId)
 	{
 		Waiter w = findWaiter(waiterId);
@@ -107,15 +130,15 @@ public class WaitersController implements Runnable
 		{
 			return w.getTables();
 		}
-		
+
 		return null;
 	}
-	
+
 	public ArrayList<Waiter> getAllWaiters()
 	{
 		return waiters;
 	}
-	
+
 	public boolean loadWaiters()
 	{
 		/* load from DB if temp file does not exist */
@@ -131,7 +154,7 @@ public class WaitersController implements Runnable
 		}
 		return false;
 	}
-	
+
 	public boolean saveWaiters()
 	{
 		try {
@@ -147,12 +170,12 @@ public class WaitersController implements Runnable
 		}
 		return false;
 	}
-	
+
 	public void liveBackup()
 	{
 		/* save to temp file */
 	}
-	
+
 	public boolean saveIdCounter() {
 		try {
 			ObjectOutputStream os = new ObjectOutputStream(
@@ -181,13 +204,13 @@ public class WaitersController implements Runnable
 		}
 		return false;
 	}
-	
+
 	private ArrayList<WaiterChangeListener> changedListeners = new ArrayList <WaiterChangeListener>();
 	public void addChangedListener(WaiterChangeListener l)
 	{
 		changedListeners.add(l);
 	}
-	
+
 	private void callChangedListeners(String changeType)
 	{
 		for (int i = 0;i < changedListeners.size();++i)
@@ -195,5 +218,5 @@ public class WaitersController implements Runnable
 			changedListeners.get(i).DoSomething(changeType);
 		}
 	}
-	
+
 }

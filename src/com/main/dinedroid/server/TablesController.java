@@ -25,6 +25,24 @@ public class TablesController implements Runnable {
 		loadTables();
 		System.err.println("Loaded " + tables.size() + " tables");
 	}
+	
+	/**
+	 * Used only to roll back an unrecoverable table
+	 * @param t
+	 * @return
+	 */
+	public boolean insertTable(Table t)
+	{
+		for(int i = 0; i < tables.size(); ++i)
+		{
+			if(tables.get(i).equals(t))
+			{
+				tables.set(i, t);
+				return true;
+			}
+		}
+		return false;
+	}
 
 	public boolean createTable(int tableId) /* nothing */
 	{
@@ -39,7 +57,7 @@ public class TablesController implements Runnable {
 		return false;
 	}
 
-	public synchronized boolean createTempTable()
+	public synchronized int createTempTable()
 	{
 		/* TEMP tables have id > 1000 */
 		Table e = new Table(tempTableId);
@@ -47,7 +65,7 @@ public class TablesController implements Runnable {
 		openTable(e.getId());
 		callChangedListeners("Table");
 		++tempTableId;
-		return result;
+		return e.getId();
 	}
 
 	public boolean removeTable(int tableId) /* int tableId */
@@ -55,6 +73,7 @@ public class TablesController implements Runnable {
 		//remove table from DB if NOT temporary
 		Table e = findTable(tableId);
 		boolean result = tables.remove(e);
+		main.wc.unassignWaiter(e.getWaiter().getId(), tableId);
 		saveTables();
 		callChangedListeners("Table");
 		return result;
@@ -107,8 +126,7 @@ public class TablesController implements Runnable {
 				closeTableOrder(t.getId());
 			}
 			t.setOccupied(false);
-			Waiter w = t.getWaiter();
-			w.removeTable(t);
+			main.wc.unassignWaiter(t.getWaiter().getId(), tableId);
 			t.setWaiter(null);
 			return true;
 		}
@@ -145,15 +163,21 @@ public class TablesController implements Runnable {
 		double price = getTotal(order);
 		System.err.println("Price of order: " + price);
 		removeTableOrder(tableId);
+		closeTable(tableId);
 		callChangedListeners("Order");
 		return true;
 	}
 
-	public synchronized void removeTableOrder(int tableId)
+	public synchronized boolean removeTableOrder(int tableId)
 	{
 		Table t = findTable(tableId);
-		t.setOrder(null);
-		t.setOrderStatus(null);
+		if(t!=null)
+		{
+			t.setOrder(null);
+			t.setOrderStatus(null);
+			return true;
+		}
+		return false;		
 	}
 
 	public boolean setOrderStatus(int tableId, int status)
