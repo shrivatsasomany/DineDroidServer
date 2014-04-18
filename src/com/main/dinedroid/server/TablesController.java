@@ -149,7 +149,6 @@ public class TablesController implements Runnable {
 	public synchronized boolean setTableOrder(int tableId, Order order)
 	{
 		Table t = findTable(tableId);
-		order.setOrderTable(tableId);
 		if(t != null)
 		{
 			t.setOrder(order);
