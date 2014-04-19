@@ -76,7 +76,7 @@ public class TableCommunicationsController implements Runnable {
 			{
 				try {
 					ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
-					out.writeObject(new Restore(true, t.getOrder(), t.getWaiter().getId()));
+					out.writeObject(new Restore(true, t.getOrder(), t.getWaiter()));
 					out.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
@@ -161,12 +161,10 @@ public class TableCommunicationsController implements Runnable {
 
 			try {
 				Order myOrder = (Order)in.readObject();
-				boolean result = main.tc.setTableOrder(tableId, myOrder);
-				in.close();
 				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
-				out.writeBoolean(result);
-				out.close();
-
+				boolean result = main.tc.setTableOrder(tableId, myOrder);
+				out.writeObject(result);
+				
 			} catch (IOException | ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

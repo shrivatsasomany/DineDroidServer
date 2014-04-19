@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import com.main.dinedroid.menu.FoodItem;
 import com.main.dinedroid.menu.Menu;
@@ -23,9 +24,27 @@ public class MenuController implements Runnable {
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
-		loadIdCounter();
 		loadMenu();
 		menu.populateMap(foodMap);
+		try {
+			loadIdCounter();
+		} catch (Exception e) {
+			/*
+			 * If there is problem loading the ID counter,
+			 * find and retrieve it from the map. 
+			 */
+			Entry<Object, FoodItem> maxEntry = null;
+			for(Entry<Object, FoodItem> entry : foodMap.entrySet())
+			{
+				if(maxEntry == null || (Integer)entry.getKey() > (Integer)maxEntry.getKey())
+				{
+					maxEntry = entry;
+					latestId = (Integer) maxEntry.getKey();
+				}
+			}
+			++latestId;
+			saveIdCounter();
+		}
 	}
 
 	public boolean addTopCategory(FoodItem e) {
@@ -106,7 +125,7 @@ public class MenuController implements Runnable {
 		return false;
 	}
 
-	public boolean loadIdCounter() {
+	public boolean loadIdCounter() throws Exception {
 		try {
 			ObjectInputStream is = new ObjectInputStream(
 					new FileInputStream("counter.dat"));
@@ -115,9 +134,8 @@ public class MenuController implements Runnable {
 			return true;
 
 		} catch (IOException | ClassNotFoundException e) {
-			e.printStackTrace();
+			throw new Exception(e.getMessage());
 		}
-		return false;
 	}
 
 	public boolean saveMenu() {

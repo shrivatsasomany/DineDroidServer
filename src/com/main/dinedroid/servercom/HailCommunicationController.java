@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 import com.main.dinedroid.models.Table;
+import com.main.dinedroid.models.Waiter;
 import com.main.dinedroid.server.main;
 
 public class HailCommunicationController implements Runnable
@@ -42,12 +43,26 @@ public class HailCommunicationController implements Runnable
 		}
 		else if(commands[1].equals("Set_Hail"))
 		{
-			main.wc.hailWaiter(Integer.parseInt(commands[2]));
+			int tableId = Integer.parseInt(commands[2]);
+			Waiter w = main.tc.findTable(tableId).getWaiter();
+			boolean result = main.wc.hailWaiter(tableId);
+			System.out.println("HAIL RESULT: "+result);
 			try {
+				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
+				out.writeBoolean(result);
+				out.close();
 				mySocket.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				/*
+				 * If result cannot be sent back to client,
+				 * ROLLBACK by removing hail
+				 */
+				if(w!=null)
+				{
+					main.wc.removeQueueTable(tableId, w.getId());
+				}
 			}
 		}
 		else

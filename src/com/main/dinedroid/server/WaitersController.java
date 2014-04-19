@@ -25,8 +25,23 @@ public class WaitersController implements Runnable
 	{
 		// TODO Auto-generated method stub	
 		waiters = new ArrayList<Waiter>();
-		loadIdCounter();
 		loadWaiters();
+		try {
+			loadIdCounter();
+		} catch (Exception e) {
+			/*
+			 * Recover latestId if id counter file is missing/corrupt
+			 */
+			for(Waiter w : waiters)
+			{
+				if(w.getId() > latestId)
+				{
+					latestId = w.getId();
+				}
+			}
+			++latestId;
+			saveIdCounter();
+		}
 	}
 
 	public boolean createWaiter(String fname, String lname) /* String name */
@@ -46,7 +61,6 @@ public class WaitersController implements Runnable
 		callChangedListeners("Waiter");
 		saveWaiters();
 		return result;
-		/*update db*/
 	}
 
 	public Waiter findWaiter(int waiterId)
@@ -67,8 +81,8 @@ public class WaitersController implements Runnable
 		if(t!=null)
 		{
 			Waiter w = t.getWaiter();
-			JOptionPane.showMessageDialog(null, "Table "+tableId+" Hailed "+w.getFName());
-			return w.addHail(t);
+			boolean result = w.addHail(t);
+			return result;
 		}
 		return false;
 	}
@@ -99,6 +113,7 @@ public class WaitersController implements Runnable
 		if(w != null)
 		{
 			callChangedListeners("Waiter");
+			w.removeHail(tableId);
 			return (w.removeTable(tableId));
 		}
 		else
@@ -191,7 +206,7 @@ public class WaitersController implements Runnable
 		return false;
 	}
 
-	public boolean loadIdCounter() {
+	public boolean loadIdCounter() throws Exception {
 		try {
 			ObjectInputStream is = new ObjectInputStream(
 					new FileInputStream("waiterId.dat"));
@@ -200,9 +215,8 @@ public class WaitersController implements Runnable
 			return true;
 
 		} catch (IOException | ClassNotFoundException e) {
-			e.printStackTrace();
+			throw new Exception(e.getMessage());
 		}
-		return false;
 	}
 
 	private ArrayList<WaiterChangeListener> changedListeners = new ArrayList <WaiterChangeListener>();
