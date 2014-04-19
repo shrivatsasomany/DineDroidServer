@@ -1,8 +1,14 @@
 package com.main.dinedroid.server;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 import com.main.dinedroid.menu.FoodItem;
+import com.main.dinedroid.menu.Menu;
 import com.main.dinedroid.models.Order;
 import com.main.dinedroid.models.Table;
 import com.main.dinedroid.models.Waiter;
@@ -11,22 +17,69 @@ import com.main.dinedroid.serverlistener.TableChangeListener;
 public class TablesController implements Runnable {
 
 	private ArrayList<Table> tables;
+	private int tempTableId = 1000;
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
 		tables = new ArrayList<Table>();
+		loadTables();
+		System.err.println("Loaded " + tables.size() + " tables");
 	}
 
-	public boolean createTable(Table e) /* nothing */
+	/**
+	 * Used only to roll back an unrecoverable table
+	 * @param t
+	 * @return
+	 */
+	public boolean insertTable(Table t)
 	{
-		/* add new table to DB if not temporary. TEMP tables have id > 1000 */
-		return tables.add(e);
+		for(int i = 0; i < tables.size(); ++i)
+		{
+			if(tables.get(i).equals(t))
+			{
+				tables.set(i, t);
+				return true;
+			}
+		}
+		return false;
 	}
 
-	public boolean removeTable(Table e) /* int tableId */
+	public boolean createTable(int tableId) /* nothing */
+	{
+		if(findTable(tableId) == null)
+		{
+			Table e = new Table(tableId);
+			callChangedListeners("Table");
+			boolean result =  tables.add(e);
+			saveTables();
+			return result;
+		}
+		return false;
+	}
+
+	public synchronized int createTempTable()
+	{
+		/* TEMP tables have id > 1000 */
+		Table e = new Table(tempTableId);
+		boolean result =  tables.add(e);
+		openTable(e.getId());
+		callChangedListeners("Table");
+		++tempTableId;
+		return e.getId();
+	}
+
+	public boolean removeTable(int tableId) /* int tableId */
 	{
 		//remove table from DB if NOT temporary
-		return tables.remove(e);
+		Table e = findTable(tableId);
+		boolean result = tables.remove(e);
+		if(e.getWaiter()!=null)
+		{
+			main.wc.unassignWaiter(e.getWaiter().getId(), tableId);
+		}
+		saveTables();
+		callChangedListeners("Table");
+		return result;
 	}
 
 	public Table findTable(int tableId)
@@ -48,6 +101,7 @@ public class TablesController implements Runnable {
 		if(t != null)
 		{
 			t.setOccupied(true);
+			callChangedListeners("Table");
 			return true;
 		}
 		return false;
@@ -72,13 +126,10 @@ public class TablesController implements Runnable {
 		{
 			if(t.getOrder() != null)
 			{
-				closeTableOrder(t.getOrder());
-				t.setOrder(null);
-				t.setOrderStatus(null);
+				closeTableOrder(t.getId());
 			}
 			t.setOccupied(false);
-			Waiter w = t.getWaiter();
-			w.removeTable(t);
+			main.wc.unassignWaiter(t.getWaiter().getId(), tableId);
 			t.setWaiter(null);
 			return true;
 		}
@@ -95,29 +146,41 @@ public class TablesController implements Runnable {
 		return null;
 	}
 
-	public boolean setTableOrder(int tableId, Order order)
+	public synchronized boolean setTableOrder(int tableId, Order order)
 	{
 		Table t = findTable(tableId);
-		order.setOrderTable(t);
+		order.setOrderTable(tableId);
 		if(t != null)
 		{
 			t.setOrder(order);
+			callChangedListeners("Order");
 			return true;
 		}
 		return false;	
 	}
-	
-	public boolean closeTableOrder(Order order)
-	{
-		double price = getTotal(order);
-		System.err.println("Price of order: " + price);
-		return true;
-	}
-	
-	public void removeTableOrder(int tableId)
+
+	public boolean closeTableOrder(int tableId)
 	{
 		Table t = findTable(tableId);
-		t.setOrder(null);
+		Order order = t.getOrder();
+		double price = getTotal(order);
+		System.err.println("Price of order: " + price);
+		removeTableOrder(tableId);
+		closeTable(tableId);
+		callChangedListeners("Order");
+		return true;
+	}
+
+	public synchronized boolean removeTableOrder(int tableId)
+	{
+		Table t = findTable(tableId);
+		if(t!=null)
+		{
+			t.setOrder(null);
+			t.setOrderStatus(null);
+			return true;
+		}
+		return false;		
 	}
 
 	public boolean setOrderStatus(int tableId, int status)
@@ -169,13 +232,44 @@ public class TablesController implements Runnable {
 		}
 		return total;
 	}
-	
+
+	public boolean loadTables()
+	{
+		try {
+			ObjectInputStream is = new ObjectInputStream(
+					new FileInputStream("tables.dat"));
+			tables = (ArrayList<Table>)is.readObject();
+			is.close();
+			return true;
+
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	public boolean saveTables()
+	{
+		try {
+			ObjectOutputStream os = new ObjectOutputStream(
+					new FileOutputStream("tables.dat"));
+			os.writeObject(tables);
+			os.close();
+			return true;
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
+	}
+
 	private ArrayList<TableChangeListener> changedListeners = new ArrayList <TableChangeListener>();
 	public void addChangedListener(TableChangeListener l)
 	{
 		changedListeners.add(l);
 	}
-	
+
 	private void callChangedListeners(String changeType)
 	{
 		for (int i = 0;i < changedListeners.size();++i)
@@ -183,5 +277,5 @@ public class TablesController implements Runnable {
 			changedListeners.get(i).DoSomething(changeType);
 		}
 	}
-	
+
 }

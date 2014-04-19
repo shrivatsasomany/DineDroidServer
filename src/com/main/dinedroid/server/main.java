@@ -17,17 +17,17 @@ public class main {
 		mc.run();
 		Thread sl = new Thread(new ServerListener());
 		sl.start();
-		Waiter w = new Waiter(1, "Shrivatsa");
-		Waiter w2 = new Waiter(2, "Harshi");
-		Table t = new Table(1);
-		Table t2 = new Table(2);
-		tc.createTable(t);
-		tc.createTable(t2);
-		System.out.println(wc.createWaiter(w));
-		System.out.println(wc.createWaiter(w2));
-		System.out.println(wc.removeWater(w));
+		//Waiter w = new Waiter(1, "Shrivatsa");
+		//Waiter w2 = new Waiter(2, "Harshi");
+//		Table t = new Table(1);
+//		Table t2 = new Table(2);
+//		tc.createTable(t);
+//		tc.createTable(t2);
+		//System.out.println(wc.createWaiter(w));
+		//System.out.println(wc.createWaiter(w2));
+		//System.out.println(wc.removeWater(w));
 		//wc.assignWaiter(2, 2);
-		wc.assignWaiter(1, 1);
+		//wc.assignWaiter(1, 1);
 
 		MainServerGUI gui = new MainServerGUI(tc, wc, mc);
 		gui.setVisible(true);		

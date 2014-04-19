@@ -24,14 +24,26 @@ public class WaiterCommunicationController implements Runnable {
 		{
 			int tableId = Integer.parseInt(commands[2]);
 			int waiterId = Integer.parseInt(commands[3]);
-			main.wc.assignWaiter(tableId, waiterId);
+			boolean result = main.wc.assignWaiter(tableId, waiterId);
+			
 			try {
+				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
+				out.writeBoolean(result);
+				out.close();
 				mySocket.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				/*
+				 * If client times out or crashes, and server can't return the result:
+				 * ROLLBACK by unassigning waiter. 
+				 */
+				main.wc.unassignWaiter(waiterId, tableId);
 			}
 		}
+		/*
+		 * Returns the tables assigned to a particular waiter
+		 */
 		else if(commands[1].equals("Get_Assigned_Tables"))
 		{
 			int waiterId = Integer.parseInt(commands[2]);
@@ -46,6 +58,30 @@ public class WaiterCommunicationController implements Runnable {
 				e.printStackTrace();
 			}
 			
+		}
+		/*
+		 * Unassigns a waiter from a table
+		 */
+		else if(commands[1].equals("Unassign_Waiter"))
+		{
+			int tableId = Integer.parseInt(commands[2]);
+			Table t = main.tc.findTable(tableId);
+			int waiterId = t.getWaiter().getId();
+			boolean result = main.wc.unassignWaiter(waiterId, tableId);
+			try {
+				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
+				out.writeBoolean(result);
+				out.close();
+				mySocket.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				/*
+				 * If client times out or crashes, and server can't return the result:
+				 * ROLLBACK by assigning old waiter again. 
+				 */
+				main.wc.assignWaiter(tableId, waiterId);
+			}
 		}
 		else
 		{

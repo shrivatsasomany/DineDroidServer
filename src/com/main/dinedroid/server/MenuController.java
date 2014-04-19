@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.main.dinedroid.menu.FoodItem;
 import com.main.dinedroid.menu.Menu;
@@ -15,6 +16,7 @@ import com.main.dinedroid.serverlistener.MenuChangeListener;
 public class MenuController implements Runnable {
 
 	private Menu menu = new Menu();
+	private HashMap<Object, FoodItem> foodMap = new HashMap<Object, FoodItem>();
 	private Integer latestId = 0;
 	private AllExtras everyExtra = new AllExtras();
 
@@ -23,14 +25,19 @@ public class MenuController implements Runnable {
 		// TODO Auto-generated method stub
 		loadIdCounter();
 		loadMenu();
+		menu.populateMap(foodMap);
 	}
 
 	public boolean addTopCategory(FoodItem e) {
-		return menu.addItem(e);
+		boolean result = menu.addItem(e);
+		foodMap.put(e.getID(), e);
+		return result;
 	}
 
 	public boolean removeTopCategory(FoodItem e) {
-		return menu.removeItem(e);
+		boolean result = menu.removeItem(e);
+		foodMap.remove(e.getID());
+		return result;
 	}
 
 	public Menu getMenu()
@@ -38,7 +45,7 @@ public class MenuController implements Runnable {
 		return menu;
 	}
 	
-	public boolean setAvailability(int itemId, boolean availability)
+	public  boolean setAvailability(int itemId, boolean availability)
 	{
 		FoodItem item = menu.findItem(itemId);
 		if(item == null)
@@ -56,7 +63,13 @@ public class MenuController implements Runnable {
 	public void processCategory(FoodItem parent, FoodItem child)
 	{
 		parent.addItem(child);
+		foodMap.put(child.getID(), child);
 		callChangedListeners("Category");
+	}
+	
+	public FoodItem getItem(int id)
+	{
+		return foodMap.get(id);
 	}
 
 	public int getLatestId()
@@ -77,16 +90,6 @@ public class MenuController implements Runnable {
 		//saveExtras();
 		callChangedListeners("Extra");
 	}
-
-
-
-
-
-
-
-
-
-
 
 	public boolean saveIdCounter() {
 		try {
