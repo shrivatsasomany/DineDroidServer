@@ -5,15 +5,28 @@ import java.util.ArrayList;
 
 import com.main.dinedroid.models.ExtraGroup;
 
+/**
+ * @author Shrivatsa
+ * @author Harshitha
+ *
+ */
 public class AllExtras implements Serializable
 {
+
 	private ArrayList<ExtraGroup> bunchaExtras;
 	
+	/**
+	 * Constructor
+	 */
 	public AllExtras()
 	{
 		bunchaExtras = new ArrayList <ExtraGroup>();
 	}
 	
+	/**
+	 * Add an extra group
+	 * @param addThis An ExtraGroup
+	 */
 	public void addExtra(ExtraGroup addThis)
 	{
 		boolean flag = false;
@@ -34,6 +47,10 @@ public class AllExtras implements Serializable
 		}
 	}
 	
+	/**
+	 * Return the list of ExtraGroups
+	 * @return
+	 */
 	public ArrayList<ExtraGroup> getExtras()
 	{
 		return bunchaExtras;

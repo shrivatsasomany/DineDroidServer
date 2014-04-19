@@ -14,6 +14,10 @@ public class HailCommunicationController implements Runnable
 
 	Socket mySocket;
 	String [] commands;
+	/**
+	 * @param mySocket Socket from the listener
+	 * @param commands String array of commands
+	 */
 	public HailCommunicationController(Socket mySocket, String[] commands)
 	{
 		this.mySocket = mySocket;
@@ -23,6 +27,12 @@ public class HailCommunicationController implements Runnable
 	public void run() 
 	{
 		// TODO Auto-generated method stub
+		/**
+		 * If the command is Get_Hail, 
+		 * Get the waiter ID, 
+		 * query WaitersController to get hails using ID
+		 * Write out the hails to the connected client
+		 */
 		if(commands[1].equals("Get_Hail"))
 		{
 			try
@@ -41,6 +51,12 @@ public class HailCommunicationController implements Runnable
 				e.printStackTrace();
 			}
 		}
+		/**
+		 * If the command is Set_Hail, 
+		 * Get the table ID, 
+		 * query WaitersController to add hail using ID
+		 * Write out the result to the client
+		 */
 		else if(commands[1].equals("Set_Hail"))
 		{
 			int tableId = Integer.parseInt(commands[2]);
@@ -61,18 +77,34 @@ public class HailCommunicationController implements Runnable
 				 */
 				if(w!=null)
 				{
-					main.wc.removeQueueTable(tableId, w.getId());
+					main.wc.removeHail(tableId, w.getId());
 				}
 			}
 		}
+		/**
+		 * If the command is Remove_Hail, 
+		 * Get the waiter ID, 
+		 * Get the table ID
+		 * query WaitersController to remove hails using IDs
+		 * Write out the hails to the connected client
+		 */
 		else
 		{
-			main.wc.removeQueueTable(Integer.parseInt(commands[2]), Integer.parseInt(commands[3]));
+			int waiterId = Integer.parseInt(commands[2]);
+			int tableId = Integer.parseInt(commands[3]);
+			Boolean result = main.wc.removeHail(Integer.parseInt(commands[2]), Integer.parseInt(commands[3]));
 			try {
+				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
+				out.writeBoolean(result);
+				out.close();
 				mySocket.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				/*
+				 * If client is down, ROLLBACK by re-adding hail
+				 */
+				main.wc.hailWaiter(tableId);
 			}
 		}
 	}

@@ -20,6 +20,13 @@ public class WaiterCommunicationController implements Runnable {
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
+		/**
+		 * If the command is Assign_Waiter, 
+		 * Get the waiter ID, 
+		 * Get the table ID
+		 * query WaitersController to assign waiter using IDs
+		 * Write out the result to the connected client
+		 */
 		if(commands[1].equals("Assign_Waiter"))
 		{
 			int tableId = Integer.parseInt(commands[2]);
@@ -41,8 +48,11 @@ public class WaiterCommunicationController implements Runnable {
 				main.wc.unassignWaiter(waiterId, tableId);
 			}
 		}
-		/*
-		 * Returns the tables assigned to a particular waiter
+		/**
+		 * If the command is Get_Assigned_Tables, 
+		 * Get the waiter ID, 
+		 * query WaitersController to assign waiter using IDs
+		 * Write out the tables of the waiter to the connected client
 		 */
 		else if(commands[1].equals("Get_Assigned_Tables"))
 		{
@@ -59,8 +69,11 @@ public class WaiterCommunicationController implements Runnable {
 			}
 			
 		}
-		/*
-		 * Unassigns a waiter from a table
+		/**
+		 * If the command is Unassign_Waiter, 
+		 * Get the table ID, 
+		 * query WaitersController to unassign waiter using IDs
+		 * Write out the result to the connected client
 		 */
 		else if(commands[1].equals("Unassign_Waiter"))
 		{
