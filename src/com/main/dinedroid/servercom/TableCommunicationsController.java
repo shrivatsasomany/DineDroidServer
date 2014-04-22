@@ -167,6 +167,7 @@ public class TableCommunicationsController implements Runnable {
 		 * Receive order from client
 		 * query the table controller to add the order
 		 * Return result to the client
+		 * Push the result to the kitchen server
 		 */
 		else if(commands[1].equals("Set_Table_Order"))
 		{
@@ -184,6 +185,15 @@ public class TableCommunicationsController implements Runnable {
 				}
 				out.writeObject(unavailableItems);
 				out.close();
+				Socket s = new Socket(main.tc.getKitchenIP(), 4355);
+				ObjectOutputStream kitchenOut = new ObjectOutputStream(s.getOutputStream());
+				kitchenOut.flush();
+				kitchenOut.writeObject("Order||Set_Order");
+				kitchenOut.flush();
+				kitchenOut.writeObject(main.tc.findTable(tableId));
+				kitchenOut.flush();
+				kitchenOut.close();
+				s.close();
 				
 			} catch (IOException | ClassNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -236,7 +246,7 @@ public class TableCommunicationsController implements Runnable {
 			String oldNotes = main.tc.findTable(tableId).getOrder().getOrderNotes(); //Null if there were no notes for the order
 			int status = Integer.parseInt(commands[3]);
 			boolean result;
-			if(commands.length == 3) //If there are no notes included in status
+			if(commands.length == 4) //If there are no notes included in status
 			{
 				result = main.tc.setOrderStatus(tableId, status);
 
@@ -248,7 +258,9 @@ public class TableCommunicationsController implements Runnable {
 			}
 			try {
 				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
+				out.flush();
 				out.writeBoolean(result);
+				out.flush();
 				out.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -260,9 +272,20 @@ public class TableCommunicationsController implements Runnable {
 				main.tc.setOrderStatus(tableId, oldStatus, oldNotes);
 			}
 		}
-		else
+		/**
+		 * If the command is Get_All_Tables
+		 * query the table controller for the list of all the tables
+		 * write out to connected client.
+		 */
+		else if(commands[1].equals("Get_All_Tables"))
 		{
-			//Default not used for easier understandability of code above. 
+			try {
+				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
+				out.writeObject(main.tc.getAllTables());
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+			}
 		}
 
 		try {				

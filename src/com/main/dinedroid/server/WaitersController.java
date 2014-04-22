@@ -299,6 +299,22 @@ public class WaitersController implements Runnable
 			throw new Exception(e.getMessage());
 		}
 	}
+	
+	/**
+	 * Cleans up the waiters:<br>
+	 * Removes any assigned tables<br>
+	 * Save the waiters to file<br>
+	 * Save ID (just to be safe)
+	 */
+	public void cleanUp()
+	{
+		for(Waiter w : waiters)
+		{
+			w.removeAllTables();
+		}
+		saveWaiters();
+		saveIdCounter();
+	}
 
 	/**
 	 * List of changed listeners for waiters

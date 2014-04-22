@@ -102,24 +102,27 @@ public class MainServerGUI extends CascadingJFrame {
 	 */
 	public MainServerGUI(TablesController tc, WaitersController wc,
 			MenuController mc) {
-		super("WaitDroid Server");
-		jList1Model = new DefaultListModel();
+		super("DineDroid Server");
 		this.tc = tc;
 		this.wc = wc;
 		this.mc = mc;
 		initialize();
 		/**
-		 * Add listeners
+		 * Add listeners to each controller<br>
+		 * These should update their respective lists<br>
+		 * AND make sure the server is persisted in case it crashes
 		 */
 		tc.addChangedListener(new TableChangeListener() {
 			@Override
 			public void DoSomething(String changeType) {
 				if (changeType.equals("Order")) {
 					refreshOrders();
+					runSave();
 				}
 
 				else {
 					refreshTables();
+					runSave();
 				}
 			}
 		});
@@ -128,13 +131,14 @@ public class MainServerGUI extends CascadingJFrame {
 			public void DoSomething(String changeType) {
 				if (changeType.equals("Waiter")) {
 					refreshWaiters();
+					runSave();
 				}
 			}
 
 		});
 
 	}
-	
+
 	/**
 	 * Generate the QR Code given the type and ID<br>
 	 * This generates codes of the form:<br>
@@ -142,11 +146,14 @@ public class MainServerGUI extends CascadingJFrame {
 	 * 1:Type is Waiter or Table<br>
 	 * 2:ID to generate<br>
 	 * This will generate and display a QR code in a JFrame
-	 * @param type Waiter or Table
-	 * @param id ID to generate
+	 * 
+	 * @param type
+	 *            Waiter or Table
+	 * @param id
+	 *            ID to generate
 	 */
 	public void generateQR(String type, int id) {
-		String myCodeText = type+"||"+id;
+		String myCodeText = type + "||" + id;
 		int size = 125;
 		String fileType = "png";
 		try {
@@ -181,7 +188,7 @@ public class MainServerGUI extends CascadingJFrame {
 			print.setForeground(Color.WHITE);
 			print.setFont(new Font("Helvetica Neue", Font.PLAIN, 13));
 			print.addActionListener(new ActionListener() {
-				
+
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					// TODO Auto-generated method stub
@@ -192,8 +199,7 @@ public class MainServerGUI extends CascadingJFrame {
 			frame.setResizable(false);
 			frame.pack();
 			frame.setVisible(true);
-		} 
-		catch (WriterException e) {
+		} catch (WriterException e) {
 			e.printStackTrace();
 		}
 		System.out.println("\n\nYou have successfully created QR Code.");
@@ -466,7 +472,21 @@ public class MainServerGUI extends CascadingJFrame {
 							@Override
 							public void actionPerformed(
 									java.awt.event.ActionEvent e) {
+								Thread t = new Thread(new Runnable() {
 
+									@Override
+									public void run() {
+										// TODO Auto-generated method stub
+										String ip = JOptionPane
+												.showInputDialog(
+														null,
+														"Change the server address (IP or hostname)",
+														tc.getKitchenIP());
+										tc.setKitchenIP(ip);
+										mc.setKitchenIP(ip);
+									}
+								});
+								t.run();
 							}
 						});
 			} catch (java.lang.Throwable e) {
@@ -555,11 +575,12 @@ public class MainServerGUI extends CascadingJFrame {
 						JList temp = (JList) e.getSource();
 						selectedOrder = (Order) temp.getSelectedValue();
 						if (e.getClickCount() == 2) {
-							JOptionPane.showMessageDialog(null, selectedOrder.detailedString());
+							JOptionPane.showMessageDialog(null,
+									selectedOrder.detailedString());
 						}
-						if(e.isShiftDown())
-						{
-							main.tc.closeTableOrder(selectedOrder.getOrderTable());
+						if (e.isShiftDown()) {
+							main.tc.closeTableOrder(selectedOrder
+									.getOrderTable());
 						}
 					}
 
@@ -593,7 +614,7 @@ public class MainServerGUI extends CascadingJFrame {
 					JList temp = (JList) e.getSource();
 					Waiter selectedWaiter = (Waiter) temp.getSelectedValue();
 					if (e.getClickCount() == 2) {
-						generateQR("Waiter",selectedWaiter.getId());
+						generateQR("Waiter", selectedWaiter.getId());
 					}
 				}
 
@@ -952,17 +973,9 @@ public class MainServerGUI extends CascadingJFrame {
 				int confirm = JOptionPane.showConfirmDialog(null,
 						"Would you like to quit?", "Quit?",
 						JOptionPane.YES_NO_OPTION);
-				int confirmSave = JOptionPane.showConfirmDialog(null,
-						"Would you like to save?", "Save?",
-						JOptionPane.YES_NO_OPTION);
-				if (confirm == JOptionPane.YES_OPTION
-						&& confirmSave == JOptionPane.YES_OPTION) {
-					runSave();
-					System.exit(0);
-				}
-				if (confirm == JOptionPane.YES_OPTION
-						&& confirmSave == JOptionPane.NO_OPTION) {
-					System.exit(0);
+
+				if (confirm == JOptionPane.YES_OPTION) {
+					runQuit();
 				} else {
 
 				}
@@ -1042,11 +1055,44 @@ public class MainServerGUI extends CascadingJFrame {
 	}
 
 	/**
-	 * Clean up and save the state
+	 * Crash state saving NOTE: Does NOT clean up! This is to prevent data<br>
+	 * consistency issues when the server crashes
 	 */
 	public void runSave() {
 		mc.saveMenu();
 		tc.saveTables();
 		wc.saveIdCounter();
+		wc.saveWaiters();
 	}
+
+	/**
+	 * Start server clean up<br>
+	 * try to quit. If there is a table with an open order<br>
+	 * Handle that first
+	 */
+	public void runQuit() {
+		mc.saveMenu();
+		mc.saveIdCounter();
+		wc.cleanUp();
+		try {
+			tc.cleanUp();
+			System.exit(0);
+
+		} catch (final Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			Thread t = new Thread(new Runnable() {
+
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					JOptionPane.showMessageDialog(null, e.getMessage(),
+							"Cannot Quit", JOptionPane.ERROR_MESSAGE);
+				}
+			});
+			t.run();
+		}
+
+	}
+
 } // @jve:decl-index=0:visual-constraint="140,2"

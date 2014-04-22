@@ -34,20 +34,21 @@ public class MenuCommunicationController implements Runnable {
 			boolean availability = Boolean.parseBoolean(status);
 			boolean result = main.mc.setAvailability(itemId, availability);
 			System.err.println("Item Setting: "+result);
-//			try {
-//				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
-//				out.writeBoolean(result);
-//				out.flush();
-//				out.close();
-//			} catch (IOException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//				/*
-//				 * If result cannot be delivered to client:
-//				 * ROLLBACK by setting old availibility
-//				 */
-//				oldItem.setAvailable(oldStatus);
-//			}
+			try {
+				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
+				out.flush();
+				out.writeBoolean(result);
+				out.flush();
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				/*
+				 * If result cannot be delivered to client:
+				 * ROLLBACK by setting old availibility
+				 */
+				oldItem.setAvailable(oldStatus);
+			}
 		}
 		/**
 		 * If the command is Get_Menu, 
