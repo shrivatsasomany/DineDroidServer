@@ -42,7 +42,8 @@ public class ManagePredefinedExtraGUI extends JFrame {
 	private JTextField extraPrice;
 
 	/**
-	 * @param owner
+	 * Pass the menu controller
+	 * @param MenuController
 	 */
 	public ManagePredefinedExtraGUI(MenuController passed) {
 		super("Manage Predefined Extras");
@@ -375,6 +376,9 @@ public class ManagePredefinedExtraGUI extends JFrame {
 		}
 	}
 
+	/**
+	 * Refresh the extras of this group
+	 */
 	private void refreshSpecifics() {
 		ArrayList<FoodItem> jListCategories = selectedExtraGroup.getExtras();
 
@@ -393,6 +397,9 @@ public class ManagePredefinedExtraGUI extends JFrame {
 		}
 	}
 
+	/**
+	 * Clear the waiter list
+	 */
 	private void clearList() {
 		final String[] temp1 = new String[0];
 		extrasList.setListData(temp1);

@@ -434,6 +434,9 @@ public class ManageCategoryGUI extends CascadingJFrame
 		return addItem;
 	}
 
+	/**
+	 * Refresh the list of FoodItems in this category
+	 */
 	private void refreshList()
 	{
 		if(refreshFlag == -1)
