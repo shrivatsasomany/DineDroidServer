@@ -145,16 +145,25 @@ public class MainServerGUI extends CascadingJFrame {
 	 * <b>Type</b>||<b>ID</b><br>
 	 * 1:Type is Waiter or Table<br>
 	 * 2:ID to generate<br>
+	 * 3:If type is Waiter, attach name:
+	 * <b>Type</b>||<b>ID</b>||<b>FirstName</b>||<b>LastName</b><br>
 	 * This will generate and display a QR code in a JFrame
 	 * 
 	 * @param type
 	 *            Waiter or Table
 	 * @param id
 	 *            ID to generate
+	 * @param fname
+	 *            Waiter first name
+	 * @param lname
+	 *            Waiter last name
 	 */
-	public void generateQR(String type, int id) {
+	public void generateQR(String type, int id, String fname, String lname) {
 		String myCodeText = type + "||" + id;
-		int size = 125;
+		if (type.equals("Waiter")) {
+			myCodeText = type + "||" + id + "||" + fname + "||" + lname;
+		}
+		int size = 250;
 		String fileType = "png";
 		try {
 			Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
@@ -614,7 +623,9 @@ public class MainServerGUI extends CascadingJFrame {
 					JList temp = (JList) e.getSource();
 					Waiter selectedWaiter = (Waiter) temp.getSelectedValue();
 					if (e.getClickCount() == 2) {
-						generateQR("Waiter", selectedWaiter.getId());
+						generateQR("Waiter", selectedWaiter.getId(),
+								selectedWaiter.getFName(),
+								selectedWaiter.getLName());
 					}
 				}
 
@@ -839,7 +850,7 @@ public class MainServerGUI extends CascadingJFrame {
 					JList temp = (JList) e.getSource();
 					Table selectedTable = (Table) temp.getSelectedValue();
 					if (e.getClickCount() == 2) {
-						generateQR("Table", selectedTable.getId());
+						generateQR("Table", selectedTable.getId(), null, null);
 					}
 				}
 

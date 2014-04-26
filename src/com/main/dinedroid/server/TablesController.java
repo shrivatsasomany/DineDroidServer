@@ -185,8 +185,11 @@ public class TablesController implements Runnable {
 				closeTableOrder(t.getId());
 			}
 			t.setOccupied(false);
-			main.wc.unassignWaiter(t.getWaiter().getId(), tableId);
-			t.setWaiter(null);
+			if(t.getWaiter()!=null)
+			{
+				main.wc.unassignWaiter(t.getWaiter().getId(), tableId);
+				t.setWaiter(null);
+			}
 			return true;
 		}
 		return false;
