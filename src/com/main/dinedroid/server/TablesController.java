@@ -16,13 +16,35 @@ public class TablesController implements Runnable {
 
 	private ArrayList<Table> tables;
 	private int tempTableId = 1000;
+	private int ORDER_OK = 1;
+	private String kitchenIP = "localhost";
 
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
 		tables = new ArrayList<Table>();
 		loadTables();
+		loadKitchenIP();
 		System.err.println("Loaded " + tables.size() + " tables");
+	}
+
+	/**
+	 * Used to set the address of the kitchen server
+	 * 
+	 * @param ip
+	 *            A String IP address or hostname
+	 */
+	public void setKitchenIP(String ip) {
+		kitchenIP = ip;
+	}
+
+	/**
+	 * Get the address of the kitchen
+	 * 
+	 * @return the address of the kitchen
+	 */
+	public String getKitchenIP() {
+		return kitchenIP;
 	}
 
 	/**
@@ -163,8 +185,11 @@ public class TablesController implements Runnable {
 				closeTableOrder(t.getId());
 			}
 			t.setOccupied(false);
-			main.wc.unassignWaiter(t.getWaiter().getId(), tableId);
-			t.setWaiter(null);
+			if(t.getWaiter()!=null)
+			{
+				main.wc.unassignWaiter(t.getWaiter().getId(), tableId);
+				t.setWaiter(null);
+			}
 			return true;
 		}
 		return false;
@@ -200,25 +225,26 @@ public class TablesController implements Runnable {
 		Table t = findTable(tableId);
 		if (t != null) {
 			t.setOrder(order);
+			t.setOrderStatus(ORDER_OK);
 			callChangedListeners("Order");
 			return true;
 		}
 		return false;
 	}
-	
+
 	/**
-	 * Checks if the items in an order are available by querying the map from the MenuController
-	 * @param order An Order
+	 * Checks if the items in an order are available by querying the map from
+	 * the MenuController
+	 * 
+	 * @param order
+	 *            An Order
 	 * @return the list of unavailable items. It is empty if there aren't any
 	 */
-	public ArrayList<FoodItem> verifyOrder(Order order)
-	{
+	public ArrayList<FoodItem> verifyOrder(Order order) {
 		ArrayList<FoodItem> unavailableItems = new ArrayList<FoodItem>();
-		for(FoodItem e:order.getOrder())
-		{
+		for (FoodItem e : order.getOrder()) {
 			FoodItem f = main.mc.getItem(e.getID());
-			if(f.isAvailable())
-			{
+			if (!f.isAvailable()) {
 				unavailableItems.add(f);
 			}
 		}
@@ -229,7 +255,8 @@ public class TablesController implements Runnable {
 	 * Close an order of a table Find the table by ID, get the order, calculate
 	 * the price (display for now). Remove the order from the table
 	 * 
-	 * @param tableId An ID
+	 * @param tableId
+	 *            An ID
 	 * @return true if the order was found and closed, false otherwise
 	 */
 	public boolean closeTableOrder(int tableId) {
@@ -247,8 +274,11 @@ public class TablesController implements Runnable {
 
 	/**
 	 * Remove order from a table <b>without</b> closing and processing it.
-	 * @param tableId An ID
-	 * @return true if the table was found and order was removed, false otherwise
+	 * 
+	 * @param tableId
+	 *            An ID
+	 * @return true if the table was found and order was removed, false
+	 *         otherwise
 	 */
 	public synchronized boolean removeTableOrder(int tableId) {
 		Table t = findTable(tableId);
@@ -262,8 +292,14 @@ public class TablesController implements Runnable {
 
 	/**
 	 * Set the status of the order
-	 * @param tableId An ID
-	 * @param status (Integer)<br>1 for <b>OK</b><br>2 for <b>Delayed</b><br>3 for <b>Problem</b>
+	 * 
+	 * @param tableId
+	 *            An ID
+	 * @param status
+	 *            (Integer)<br>
+	 *            1 for <b>OK</b><br>
+	 *            2 for <b>Delayed</b><br>
+	 *            3 for <b>Problem</b>
 	 * @return true if the order was found and changed, false otherwise
 	 */
 	public boolean setOrderStatus(int tableId, int status) {
@@ -277,9 +313,16 @@ public class TablesController implements Runnable {
 
 	/**
 	 * Set the order status with notes
-	 * @param tableId An ID
-	 * @param status (Integer)<br>1 for <b>OK</b><br>2 for <b>Delayed</b><br>3 for <b>Problem</b>
-	 * @param orderNotes Notes for an order
+	 * 
+	 * @param tableId
+	 *            An ID
+	 * @param status
+	 *            (Integer)<br>
+	 *            1 for <b>OK</b><br>
+	 *            2 for <b>Delayed</b><br>
+	 *            3 for <b>Problem</b>
+	 * @param orderNotes
+	 *            Notes for an order
 	 * @return
 	 */
 	public boolean setOrderStatus(int tableId, int status, String orderNotes) {
@@ -294,6 +337,7 @@ public class TablesController implements Runnable {
 
 	/**
 	 * Get the list of all tables
+	 * 
 	 * @return list of tables
 	 */
 	public ArrayList<Table> getAllTables() {
@@ -302,7 +346,9 @@ public class TablesController implements Runnable {
 
 	/**
 	 * Calculate the total of an order
-	 * @param order (An Order)
+	 * 
+	 * @param order
+	 *            (An Order)
 	 * @return Order price
 	 */
 	public double getTotal(Order order) {
@@ -325,6 +371,7 @@ public class TablesController implements Runnable {
 
 	/**
 	 * Load the tables from a file
+	 * 
 	 * @return true if file load was successful, false otherwise
 	 */
 	public boolean loadTables() {
@@ -343,6 +390,7 @@ public class TablesController implements Runnable {
 
 	/**
 	 * Save tables to a file
+	 * 
 	 * @return true if file save was successful, false otherwise
 	 */
 	public boolean saveTables() {
@@ -361,13 +409,64 @@ public class TablesController implements Runnable {
 	}
 
 	/**
+	 * Saves the kitchen address
+	 */
+	public void saveKitchenIP() {
+		try {
+			ObjectOutputStream os = new ObjectOutputStream(
+					new FileOutputStream("serverIP.dat"));
+			os.writeObject(kitchenIP);
+			os.close();
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Loads the kitchen address
+	 */
+	public void loadKitchenIP() {
+		try {
+			ObjectInputStream is = new ObjectInputStream(new FileInputStream(
+					"serverIP.dat"));
+			kitchenIP = (String) is.readObject();
+			is.close();
+
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Cleans up the class before quit: Removes any waiters attached to the
+	 * tables If there are any pending orders, throws an exception!
+	 * 
+	 * @throws Exception
+	 *             If there is an open order for a table
+	 */
+	public void cleanUp() throws Exception {
+		for (Table t : tables) {
+			if (t.getOrder() != null) {
+				throw new Exception(
+						"One or more tables have an open order.\nPlease close them before quitting");
+			}
+			closeTable(t.getId());
+		}
+		saveTables();
+	}
+
+	/**
 	 * List to hold change listeners for tables
 	 */
 	private ArrayList<TableChangeListener> changedListeners = new ArrayList<TableChangeListener>();
 
 	/**
 	 * Add a listener to the table of listeners
-	 * @param l A listener
+	 * 
+	 * @param l
+	 *            A listener
 	 */
 	public void addChangedListener(TableChangeListener l) {
 		changedListeners.add(l);
@@ -375,6 +474,7 @@ public class TablesController implements Runnable {
 
 	/**
 	 * Call the doSomething for each listener in the table
+	 * 
 	 * @param changeType
 	 */
 	private void callChangedListeners(String changeType) {
