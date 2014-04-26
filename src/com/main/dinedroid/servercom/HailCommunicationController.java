@@ -95,7 +95,9 @@ public class HailCommunicationController implements Runnable
 			Boolean result = main.wc.removeHail(Integer.parseInt(commands[2]), Integer.parseInt(commands[3]));
 			try {
 				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
+				out.flush();
 				out.writeBoolean(result);
+				out.flush();
 				out.close();
 				mySocket.close();
 			} catch (IOException e) {
