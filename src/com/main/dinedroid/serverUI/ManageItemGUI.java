@@ -320,6 +320,9 @@ public class ManageItemGUI extends CascadingJFrame
 		return jButton2;
 	}
 	
+	/**
+	 * Refresh the extras list of the item in question
+	 */
 	private void refreshList1()
 	{
 		ArrayList <FoodItem> jListCategories = passedItem.getExtras();
@@ -333,6 +336,9 @@ public class ManageItemGUI extends CascadingJFrame
 	    jList1.setListData(temp1);
 	}
 	
+	/**
+	 * Refresh the list of predefined extras
+	 */
 	private void refreshList2()
 	{
 	  

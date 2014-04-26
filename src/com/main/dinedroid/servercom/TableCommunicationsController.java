@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 
+import com.main.dinedroid.menu.FoodItem;
 import com.main.dinedroid.models.Order;
 import com.main.dinedroid.models.Restore;
 import com.main.dinedroid.models.Table;
@@ -24,7 +26,10 @@ public class TableCommunicationsController implements Runnable {
 	@Override
 	public void run() {
 		/**
+		 * If the command is Open_Table
+		 * Get the table ID
 		 * To open a table, given a specified table ID from the client
+		 * return result to connected client
 		 */
 		if(commands[1].equals("Open_Table"))
 		{
@@ -90,7 +95,9 @@ public class TableCommunicationsController implements Runnable {
 			}
 		}
 		/**
-		 * To dynamically create and open a temporary table
+		 * If the command is Open_Temp_Table
+		 * Dynamically create and open a temporary table
+		 * Return the dynamically created table ID to the connected client. 
 		 */
 		if(commands[1].equals("Open_Temp_Table"))
 		{
@@ -110,8 +117,10 @@ public class TableCommunicationsController implements Runnable {
 			}
 		}
 		/**
+		 * If the command is Close_Table
 		 * To close a table and settle any unpaid orders. 
 		 * This is done through a table ID
+		 * Return the result to the connected client
 		 */
 		else if(commands[1].equals("Close_Table"))
 		{
@@ -135,7 +144,9 @@ public class TableCommunicationsController implements Runnable {
 
 		}
 		/**
+		 * If the command is Get_Table_Order
 		 * To get the current order attached to a table, given the table id
+		 * Return the order to the connected client
 		 */
 		else if(commands[1].equals("Get_Table_Order"))
 		{
@@ -151,7 +162,11 @@ public class TableCommunicationsController implements Runnable {
 			}
 		}
 		/**
-		 * To add an order to a table. 
+		 * If the command is Set_Table_Order
+		 * Get the table ID
+		 * Receive order from client
+		 * query the table controller to add the order
+		 * Return result to the client
 		 */
 		else if(commands[1].equals("Set_Table_Order"))
 		{
@@ -162,8 +177,13 @@ public class TableCommunicationsController implements Runnable {
 			try {
 				Order myOrder = (Order)in.readObject();
 				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
-				boolean result = main.tc.setTableOrder(tableId, myOrder);
-				out.writeObject(result);
+				ArrayList<FoodItem> unavailableItems = main.tc.verifyOrder(myOrder);
+				if(unavailableItems.size() == 0)
+				{
+					boolean result = main.tc.setTableOrder(tableId, myOrder);
+				}
+				out.writeObject(unavailableItems);
+				out.close();
 				
 			} catch (IOException | ClassNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -177,8 +197,10 @@ public class TableCommunicationsController implements Runnable {
 			}
 		}
 		/**
+		 * If the command is Remove_Table_Order
 		 * To remove an order from a table without billing it. 
 		 * Given a table ID
+		 * Remove the table using the table controller
 		 */
 		else if(commands[1].equals("Remove_Table_Order"))
 		{
@@ -201,8 +223,11 @@ public class TableCommunicationsController implements Runnable {
 		}
 
 		/**
+		 * If the command is Set_Order_Status
 		 * To set the status of an order
 		 * Given a table ID and order status ID
+		 * Set the order of the status using the table controller
+		 * return the result to the connected client
 		 */
 		else if(commands[1].equals("Set_Order_Status"))
 		{

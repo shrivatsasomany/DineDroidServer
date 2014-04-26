@@ -16,9 +16,21 @@ import com.main.dinedroid.serverlistener.MenuChangeListener;
 
 public class MenuController implements Runnable {
 
+	/**
+	 * Instance of a Menu
+	 */
 	private Menu menu = new Menu();
+	/**
+	 * Map to flatten menu structure for easy item retrieval 
+	 */
 	private HashMap<Object, FoodItem> foodMap = new HashMap<Object, FoodItem>();
+	/**
+	 * This stores the latest ID
+	 */
 	private Integer latestId = 0;
+	/**
+	 * Instance of AllExtras (holds ExtraGroups)
+	 */
 	private AllExtras everyExtra = new AllExtras();
 
 	@Override
@@ -26,6 +38,7 @@ public class MenuController implements Runnable {
 		// TODO Auto-generated method stub
 		loadMenu();
 		menu.populateMap(foodMap);
+		menu.setMap(foodMap);
 		try {
 			loadIdCounter();
 		} catch (Exception e) {
@@ -47,38 +60,67 @@ public class MenuController implements Runnable {
 		}
 	}
 
+	/**
+	 * @param e A FoodItem
+	 * @return true or false, depending on successful addition to the list
+	 */
 	public boolean addTopCategory(FoodItem e) {
 		boolean result = menu.addItem(e);
 		foodMap.put(e.getID(), e);
 		return result;
 	}
 
+	/**
+	 * @param e A FoodItem
+	 * @return true or false, depending on successful deletion from the list
+	 */
 	public boolean removeTopCategory(FoodItem e) {
 		boolean result = menu.removeItem(e);
 		foodMap.remove(e.getID());
 		return result;
 	}
 
+	/**
+	 * @return The entire Menu
+	 */
 	public Menu getMenu()
 	{
 		return menu;
 	}
 	
-	public  boolean setAvailability(int itemId, boolean availability)
+	/**
+	 * Set the availability of an Item in the menu
+	 * @param itemId The ID of the item
+	 * @param availability What you want the availability to be
+	 * @return true or false, depending on if the item was found and flipped or not.
+	 */
+	public synchronized boolean setAvailability(int itemId, boolean availability)
 	{
-		FoodItem item = menu.findItem(itemId);
+		/*
+		 * Find the item
+		 */
+		FoodItem item = foodMap.get(itemId);
 		if(item == null)
 		{
 			return false;
 		}
 		else
 		{
+			/*
+			 * Set the availability
+			 */
 			item.setAvailable(availability);
+			foodMap.get(itemId).setAvailable(availability);
 			return true;
 		}
 		
 	}
 
+	/**
+	 * Add a FoodItem to another FoodItem
+	 * @param parent The item to add to
+	 * @param child The item to be added
+	 */
 	public void processCategory(FoodItem parent, FoodItem child)
 	{
 		parent.addItem(child);
@@ -86,11 +128,21 @@ public class MenuController implements Runnable {
 		callChangedListeners("Category");
 	}
 	
+	/**
+	 * Get a FoodItem from the MAP
+	 * @param id the ID of the item
+	 * @return FoodItem (or null)
+	 */
 	public FoodItem getItem(int id)
 	{
 		return foodMap.get(id);
 	}
 
+	/**
+	 * Get the latest ID to be assigned to the foodItem
+	 * This is persisted in a file
+	 * @return
+	 */
 	public int getLatestId()
 	{
 		++latestId;
@@ -98,11 +150,19 @@ public class MenuController implements Runnable {
 		return latestId;
 	}
 
+	/**
+	 * Get the list of prefedined extras
+	 * @return List of ExtraGroups
+	 */
 	public ArrayList<ExtraGroup> getPredefinedExtras()
 	{
 		return everyExtra.getExtras();
 	}
 
+	/**
+	 * Add a predefined ExtraGroup to the list of extras
+	 * @param addThis an ExtraGroup
+	 */
 	public void addPredefinedExtra(ExtraGroup addThis)
 	{
 		everyExtra.addExtra(addThis);
@@ -110,6 +170,10 @@ public class MenuController implements Runnable {
 		callChangedListeners("Extra");
 	}
 
+	/**
+	 * Save the ID counter
+	 * @return true or false, depending on successful saving of the file
+	 */
 	public boolean saveIdCounter() {
 		try {
 			ObjectOutputStream os = new ObjectOutputStream(
@@ -125,6 +189,11 @@ public class MenuController implements Runnable {
 		return false;
 	}
 
+	/**
+	 * Load the ID counter
+	 * @return true if it loads successfully, false otherwise
+	 * @throws Exception IOException or ClassNotFoundException
+	 */
 	public boolean loadIdCounter() throws Exception {
 		try {
 			ObjectInputStream is = new ObjectInputStream(
@@ -138,6 +207,10 @@ public class MenuController implements Runnable {
 		}
 	}
 
+	/**
+	 * Presists menu to file
+	 * @return
+	 */
 	public boolean saveMenu() {
 		try {
 			ObjectOutputStream os = new ObjectOutputStream(
@@ -153,6 +226,10 @@ public class MenuController implements Runnable {
 		return false;
 	}
 
+	/**
+	 * Loads menu from file
+	 * @return
+	 */
 	public boolean loadMenu() {
 		try {
 			ObjectInputStream is = new ObjectInputStream(
@@ -168,12 +245,24 @@ public class MenuController implements Runnable {
 		return false;
 	}
 
+	/**
+	 * MVC Change listener used to collect different listeners
+	 */
 	private ArrayList<MenuChangeListener> changedListeners = new ArrayList <MenuChangeListener>();
+	/**
+	 * Add listener to the list
+	 * @param l
+	 */
 	public void addChangedListener(MenuChangeListener l)
 	{
 		changedListeners.add(l);
 	}
 
+	/**
+	 * Interface to call the appropriate listener
+	 * This is ONLY used to automatically tell the GUI to refresh the Menu List
+	 * @param changeType
+	 */
 	private void callChangedListeners(String changeType)
 	{
 		for (int i = 0;i < changedListeners.size();++i)

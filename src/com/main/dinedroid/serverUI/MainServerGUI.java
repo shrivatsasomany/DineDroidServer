@@ -15,14 +15,12 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
@@ -58,50 +56,46 @@ import com.main.dinedroid.swing.VectorButton;
 public class MainServerGUI extends CascadingJFrame {
 
 	private static final long serialVersionUID = 1L;
-	private JTabbedPane jTabbedPane1 = null;
-	private JPanel orderPanel = null;
-	private JPanel menuPanel = null;
-	private JScrollPane jScrollPane1 = null;
-	private JButton addCategoryEnable = null;
-	private JList menuList;
-	private JList orderList;
-	private JList waiterList;
-	private JList tablesList;
-
-	private DefaultListModel jList1Model = null;
-	private JTextField categoryName = null;
-	private JTextField jTextField2 = null;
-
-	private JLabel jLabel1 = null;
 	private JButton addCategory = null;
-	public TablesController tc = null;
-	public WaitersController wc = null;
-	public MenuController mc = null;
-	private FoodItem selectedCategory = null;
-	private Order selectedOrder = null;
-	private JScrollPane jScrollPane2 = null;
-	private JScrollPane jScrollPane3 = null;
-
+	private JButton addCategoryEnable = null;
+	private JButton addWaiter;
 	private JButton jButton3 = null;
 	private JButton jButton4 = null;
-
-	private JMenuBar jJMenuBar = null;
-	private JMenu jMenu1 = null;
-	private JMenuItem jMenuItem1 = null;
-	private JMenu jMenu2 = null;
-	private JMenuItem jMenuItem2 = null;
-	private JMenuItem jMenuItem3 = null;
-	private JPanel waiterPanel;
-	private JScrollPane jScrollPane4;
 	private VectorButton addWaiterEnable;
-	private JTextField waiterFirstName;
+	private JTextField categoryName = null;
+	private JLabel jLabel1 = null;
 	private JLabel jLabel2;
 	private JLabel jLabel3;
-	private JButton addWaiter;
-	private JTextField waiterLastName;
+	private DefaultListModel jList1Model = null;
+	private JMenuBar jJMenuBar = null;
+	private JMenu jMenu1 = null;
+	private JMenu jMenu2 = null;
+	private JMenuItem jMenuItem1 = null;
+	private JMenuItem jMenuItem2 = null;
+	private JMenuItem jMenuItem3 = null;
+	private JScrollPane jScrollPane1 = null;
+	private JScrollPane jScrollPane2 = null;
+	private JScrollPane jScrollPane3 = null;
+	private JScrollPane jScrollPane4;
+	private JTabbedPane jTabbedPane1 = null;
+	private JTextField jTextField2 = null;
+	public MenuController mc = null;
+	private JList menuList;
+	private JPanel menuPanel = null;
 	private JMenu mnNewMenu;
 	private JMenuItem mntmCreateTable;
+	private JList orderList;
+	private JPanel orderPanel = null;
+	private FoodItem selectedCategory = null;
+	private Order selectedOrder = null;
+	private JList tablesList;
 	private JPanel tablesPanel;
+	public TablesController tc = null;
+	private JTextField waiterFirstName;
+	private JTextField waiterLastName;
+	private JList waiterList;
+	private JPanel waiterPanel;
+	public WaitersController wc = null;
 
 	/**
 	 * This is the default constructor
@@ -114,6 +108,9 @@ public class MainServerGUI extends CascadingJFrame {
 		this.wc = wc;
 		this.mc = mc;
 		initialize();
+		/**
+		 * Add listeners
+		 */
 		tc.addChangedListener(new TableChangeListener() {
 			@Override
 			public void DoSomething(String changeType) {
@@ -135,6 +132,138 @@ public class MainServerGUI extends CascadingJFrame {
 			}
 
 		});
+
+	}
+	
+	/**
+	 * Generate the QR Code given the type and ID<br>
+	 * This generates codes of the form:<br>
+	 * <b>Type</b>||<b>ID</b><br>
+	 * 1:Type is Waiter or Table<br>
+	 * 2:ID to generate<br>
+	 * This will generate and display a QR code in a JFrame
+	 * @param type Waiter or Table
+	 * @param id ID to generate
+	 */
+	public void generateQR(String type, int id) {
+		String myCodeText = type+"||"+id;
+		int size = 125;
+		String fileType = "png";
+		try {
+			Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
+			hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+			QRCodeWriter qrCodeWriter = new QRCodeWriter();
+			BitMatrix byteMatrix = qrCodeWriter.encode(myCodeText,
+					BarcodeFormat.QR_CODE, size, size, hintMap);
+			int CrunchifyWidth = byteMatrix.getWidth();
+			final BufferedImage image = new BufferedImage(CrunchifyWidth,
+					CrunchifyWidth, BufferedImage.TYPE_INT_RGB);
+			image.createGraphics();
+
+			Graphics2D graphics = (Graphics2D) image.getGraphics();
+			graphics.setColor(Color.WHITE);
+			graphics.fillRect(0, 0, CrunchifyWidth, CrunchifyWidth);
+			graphics.setColor(Color.BLACK);
+
+			for (int i = 0; i < CrunchifyWidth; i++) {
+				for (int j = 0; j < CrunchifyWidth; j++) {
+					if (byteMatrix.get(i, j)) {
+						graphics.fillRect(i, j, 1, 1);
+					}
+				}
+			}
+			// ImageIO.write(image, fileType, myFile);
+			CascadingJFrame frame = new CascadingJFrame("QR Code");
+			frame.getContentPane().setLayout(new FlowLayout());
+			frame.getContentPane().add(new JLabel(new ImageIcon(image)));
+			VectorButton print = new VectorButton();
+			print.setText("Print");
+			print.setForeground(Color.WHITE);
+			print.setFont(new Font("Helvetica Neue", Font.PLAIN, 13));
+			print.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					// TODO Auto-generated method stub
+					new Thread(new PrintActionListener(image)).start();
+				}
+			});
+			frame.getContentPane().add(print);
+			frame.setResizable(false);
+			frame.pack();
+			frame.setVisible(true);
+		} 
+		catch (WriterException e) {
+			e.printStackTrace();
+		}
+		System.out.println("\n\nYou have successfully created QR Code.");
+	}
+
+	/**
+	 * This method initializes jButton2
+	 * 
+	 * @return javax.swing.JButton
+	 */
+	private JButton getAddCategory() {
+		if (addCategory == null) {
+			try {
+				addCategory = new JButton();
+				addCategory.setText("Add"); // Generated
+				addCategory.setEnabled(false);
+				addCategory
+						.addActionListener(new java.awt.event.ActionListener() {
+							@Override
+							public void actionPerformed(
+									java.awt.event.ActionEvent e) {
+								String name = categoryName.getText();
+								int id = mc.getLatestId();
+								FoodItem newCategory = new FoodItem(id, name,
+										0, true);
+								jLabel1.setEnabled(false);
+								categoryName.setEnabled(false);
+								addCategory.setEnabled(false);
+								mc.addTopCategory(newCategory);
+								refreshCategories();
+								addCategoryEnable.requestFocus();
+							}
+						});
+			} catch (java.lang.Throwable e) {
+				// TODO: Something
+			}
+		}
+		return addCategory;
+	}
+
+	/**
+	 * This method initializes jButton1
+	 * 
+	 * @return javax.swing.JButton
+	 */
+	private JButton getAddCategoryEnable() {
+		if (addCategoryEnable == null) {
+			try {
+				addCategoryEnable = new VectorButton();
+				addCategoryEnable.setText("Add Category"); // Generated
+				addCategoryEnable.setForeground(Color.white);
+				addCategoryEnable.setFont(new Font("Helvetica Neue",
+						Font.PLAIN, 13)); // Generated
+				addCategoryEnable.setToolTipText("Add main category.");
+				addCategoryEnable
+						.addActionListener(new java.awt.event.ActionListener() {
+							@Override
+							public void actionPerformed(
+									java.awt.event.ActionEvent e) {
+								jLabel1.setEnabled(true);
+								categoryName.setEnabled(true);
+								addCategory.setEnabled(true);
+								categoryName.requestFocus();
+							}
+						});
+			} catch (java.lang.Throwable e) {
+				// TODO: Something
+			}
+		}
+		return addCategoryEnable;
 	}
 
 	private JButton getAddWaiterButton() {
@@ -183,70 +312,20 @@ public class MainServerGUI extends CascadingJFrame {
 	}
 
 	/**
-	 * This method initializes jButton1
+	 * This method initializes jTextField1
 	 * 
-	 * @return javax.swing.JButton
+	 * @return javax.swing.JTextField
 	 */
-	private JButton getAddCategoryEnable() {
-		if (addCategoryEnable == null) {
+	private JTextField getCategoryName() {
+		if (categoryName == null) {
 			try {
-				addCategoryEnable = new VectorButton();
-				addCategoryEnable.setText("Add Category"); // Generated
-				addCategoryEnable.setForeground(Color.white);
-				addCategoryEnable.setFont(new Font("Helvetica Neue",
-						Font.PLAIN, 13)); // Generated
-				addCategoryEnable.setToolTipText("Add main category.");
-				addCategoryEnable
-						.addActionListener(new java.awt.event.ActionListener() {
-							@Override
-							public void actionPerformed(
-									java.awt.event.ActionEvent e) {
-								jLabel1.setEnabled(true);
-								categoryName.setEnabled(true);
-								addCategory.setEnabled(true);
-								categoryName.requestFocus();
-							}
-						});
+				categoryName = new JTextField();
+				categoryName.setEnabled(false);
 			} catch (java.lang.Throwable e) {
 				// TODO: Something
 			}
 		}
-		return addCategoryEnable;
-	}
-
-	/**
-	 * This method initializes jButton2
-	 * 
-	 * @return javax.swing.JButton
-	 */
-	private JButton getAddCategory() {
-		if (addCategory == null) {
-			try {
-				addCategory = new JButton();
-				addCategory.setText("Add"); // Generated
-				addCategory.setEnabled(false);
-				addCategory
-						.addActionListener(new java.awt.event.ActionListener() {
-							@Override
-							public void actionPerformed(
-									java.awt.event.ActionEvent e) {
-								String name = categoryName.getText();
-								int id = mc.getLatestId();
-								FoodItem newCategory = new FoodItem(id, name,
-										0, true);
-								jLabel1.setEnabled(false);
-								categoryName.setEnabled(false);
-								addCategory.setEnabled(false);
-								mc.addTopCategory(newCategory);
-								refreshCategories();
-								addCategoryEnable.requestFocus();
-							}
-						});
-			} catch (java.lang.Throwable e) {
-				// TODO: Something
-			}
-		}
-		return addCategory;
+		return categoryName;
 	}
 
 	private JButton getJButton4() {
@@ -421,171 +500,6 @@ public class MainServerGUI extends CascadingJFrame {
 	}
 
 	/**
-	 * This method initializes jPanel1
-	 * 
-	 * @return javax.swing.JPanel
-	 */
-	private JPanel getOrderPanel() {
-		if (orderPanel == null) {
-			try {
-				GridBagConstraints gridBagConstraints6 = new GridBagConstraints();
-				gridBagConstraints6.insets = new Insets(6, 15, 4, 448); // Generated
-				gridBagConstraints6.gridy = 0; // Generated
-				gridBagConstraints6.ipadx = -10; // Generated
-				gridBagConstraints6.ipady = 11; // Generated
-				gridBagConstraints6.gridx = 0; // Generated
-				GridBagConstraints gridBagConstraints5 = new GridBagConstraints();
-				gridBagConstraints5.fill = GridBagConstraints.BOTH; // Generated
-				gridBagConstraints5.gridx = 0; // Generated
-				gridBagConstraints5.gridy = 1; // Generated
-				gridBagConstraints5.ipadx = 276; // Generated
-				gridBagConstraints5.ipady = 178; // Generated
-				gridBagConstraints5.weightx = 1.0; // Generated
-				gridBagConstraints5.weighty = 1.0; // Generated
-				gridBagConstraints5.insets = new Insets(4, 5, 4, 6); // Generated
-				orderPanel = new JPanel();
-				orderPanel.setLayout(new GridBagLayout()); // Generated
-				orderPanel.add(getJScrollPane2(), gridBagConstraints5); // Generated
-				// jPanel1.setBackground(Color.gray); // Generated
-			} catch (java.lang.Throwable e) {
-				// TODO: Something
-			}
-		}
-		return orderPanel;
-	}
-
-	/**
-	 * This method initializes jPanel2
-	 * 
-	 * @return javax.swing.JPanel
-	 */
-	private JPanel getMenuPanel() {
-		if (menuPanel == null) {
-			try {
-				GridBagConstraints gbc_addCategory = new GridBagConstraints();
-				gbc_addCategory.insets = new Insets(7, 2, 3, 112); // Generated
-				gbc_addCategory.gridy = 1; // Generated
-				gbc_addCategory.gridx = 1; // Generated
-				GridBagConstraints gridBagConstraints3 = new GridBagConstraints();
-				gridBagConstraints3.insets = new Insets(7, 100, 6, 157); // Generated
-				gridBagConstraints3.gridy = 1; // Generated
-				gridBagConstraints3.ipadx = 1; // Generated
-				gridBagConstraints3.ipady = 10; // Generated
-				gridBagConstraints3.gridx = 0; // Generated
-				GridBagConstraints gbc_categoryName = new GridBagConstraints();
-				gbc_categoryName.fill = GridBagConstraints.VERTICAL; // Generated
-				gbc_categoryName.gridx = 0; // Generated
-				gbc_categoryName.gridy = 1; // Generated
-				gbc_categoryName.ipadx = 142; // Generated
-				gbc_categoryName.ipady = -2; // Generated
-				gbc_categoryName.weightx = 1.0; // Generated
-				gbc_categoryName.insets = new Insets(7, 200, 6, 2); // Generated
-				GridBagConstraints gbc_addCategoryEnable = new GridBagConstraints();
-				gbc_addCategoryEnable.insets = new Insets(10, 195, 7, 186); // Generated
-				gbc_addCategoryEnable.gridx = 0; // Generated
-				gbc_addCategoryEnable.gridy = 0; // Generated
-				gbc_addCategoryEnable.ipadx = 37; // Generated
-				gbc_addCategoryEnable.ipady = -3; // Generated
-				gbc_addCategoryEnable.gridwidth = 2; // Generated
-				GridBagConstraints gridBagConstraints = new GridBagConstraints();
-				gridBagConstraints.fill = GridBagConstraints.BOTH; // Generated
-				gridBagConstraints.gridwidth = 2; // Generated
-				gridBagConstraints.gridx = 0; // Generated
-				gridBagConstraints.gridy = 2; // Generated
-				gridBagConstraints.ipadx = 276; // Generated
-				gridBagConstraints.ipady = 139; // Generated
-				gridBagConstraints.weightx = 1.0; // Generated
-				gridBagConstraints.weighty = 1.0; // Generated
-				gridBagConstraints.insets = new Insets(4, 5, 4, 6); // Generated
-				jLabel1 = new JLabel();
-				jLabel1.setText("Category Name:"); // Generated
-				jLabel1.setEnabled(false);
-				menuPanel = new JPanel();
-				menuPanel.setLayout(new GridBagLayout()); // Generated
-				menuPanel.add(getJScrollPane1(), gridBagConstraints); // Generated
-				menuPanel.add(getAddCategoryEnable(), gbc_addCategoryEnable); // Generated
-				menuPanel.add(getCategoryName(), gbc_categoryName); // Generated
-				menuPanel.add(jLabel1, gridBagConstraints3); // Generated
-				menuPanel.add(getAddCategory(), gbc_addCategory); // Generated
-			} catch (java.lang.Throwable e) {
-				// TODO: Something
-			}
-		}
-		return menuPanel;
-	}
-
-	private JPanel getWaiterPanel() {
-		if (waiterPanel == null) {
-			waiterPanel = new JPanel();
-			GridBagLayout gbl_waiterPanel = new GridBagLayout();
-			gbl_waiterPanel.columnWidths = new int[] { 0, 0, 0 };
-			gbl_waiterPanel.rowHeights = new int[] { 0, 0, 0, 0, 0 };
-			gbl_waiterPanel.columnWeights = new double[] { 1.0, 0.0,
-					Double.MIN_VALUE };
-			gbl_waiterPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0,
-					Double.MIN_VALUE };
-			waiterPanel.setLayout(gbl_waiterPanel);
-			GridBagConstraints gbc_addWaiterEnable = new GridBagConstraints();
-			gbc_addWaiterEnable.gridwidth = 2;
-			gbc_addWaiterEnable.ipady = -3;
-			gbc_addWaiterEnable.ipadx = 37;
-			gbc_addWaiterEnable.insets = new Insets(10, 195, 7, 186);
-			gbc_addWaiterEnable.gridx = 0;
-			gbc_addWaiterEnable.gridy = 0;
-			waiterPanel.add(getAddWaiterEnable(), gbc_addWaiterEnable);
-			GridBagConstraints gbc_jLabel2 = new GridBagConstraints();
-			gbc_jLabel2.ipady = 10;
-			gbc_jLabel2.ipadx = 1;
-			gbc_jLabel2.insets = new Insets(7, 100, 6, 157);
-			gbc_jLabel2.gridx = 0;
-			gbc_jLabel2.gridy = 1;
-			waiterPanel.add(getJLabel2(), gbc_jLabel2);
-			GridBagConstraints gbc_waiterFirstName = new GridBagConstraints();
-			gbc_waiterFirstName.weightx = 1.0;
-			gbc_waiterFirstName.ipady = -2;
-			gbc_waiterFirstName.ipadx = 142;
-			gbc_waiterFirstName.insets = new Insets(7, 200, 6, 5);
-			gbc_waiterFirstName.gridx = 0;
-			gbc_waiterFirstName.gridy = 1;
-			GridBagConstraints gbc_jLabel3 = new GridBagConstraints();
-			gbc_jLabel3.ipady = 10;
-			gbc_jLabel3.ipadx = 1;
-			gbc_jLabel3.insets = new Insets(7, 100, 6, 157);
-			gbc_jLabel3.gridx = 0;
-			gbc_jLabel3.gridy = 2;
-			waiterPanel.add(getJLabel3(), gbc_jLabel3);
-			waiterPanel.add(getWaiterFirstName(), gbc_waiterFirstName);
-			GridBagConstraints gbc_jTextField3 = new GridBagConstraints();
-			gbc_jTextField3.anchor = GridBagConstraints.EAST;
-			gbc_jTextField3.insets = new Insets(7, 2, 5, 112);
-			gbc_jTextField3.gridx = 1;
-			gbc_jTextField3.gridy = 2;
-			waiterPanel.add(getAddWaiterButton(), gbc_jTextField3);
-			GridBagConstraints gbc_waiterLastName = new GridBagConstraints();
-			gbc_waiterLastName.fill = GridBagConstraints.BOTH;
-			gbc_waiterLastName.weightx = 1.0;
-			gbc_waiterLastName.insets = new Insets(7, 200, 6, 5);
-			gbc_waiterLastName.gridx = 0;
-			gbc_waiterLastName.gridy = 2;
-			gbc_waiterLastName.ipady = 0;
-			gbc_waiterLastName.ipadx = 142;
-			waiterPanel.add(getWaiterLastName(), gbc_waiterLastName);
-			GridBagConstraints gbc_jScrollPane4 = new GridBagConstraints();
-			gbc_jScrollPane4.weighty = 1.0;
-			gbc_jScrollPane4.weightx = 1.0;
-			gbc_jScrollPane4.ipady = 139;
-			gbc_jScrollPane4.ipadx = 276;
-			gbc_jScrollPane4.insets = new Insets(4, 5, 4, 6);
-			gbc_jScrollPane4.fill = GridBagConstraints.BOTH;
-			gbc_jScrollPane4.gridwidth = 2;
-			gbc_jScrollPane4.gridx = 0;
-			gbc_jScrollPane4.gridy = 3;
-			waiterPanel.add(getJScrollPane4(), gbc_jScrollPane4);
-		}
-		return waiterPanel;
-	}
-
-	/**
 	 * This method initializes jScrollPane1
 	 * 
 	 * @return javax.swing.JScrollPane
@@ -745,23 +659,6 @@ public class MainServerGUI extends CascadingJFrame {
 		return jTabbedPane1;
 	}
 
-	/**
-	 * This method initializes jTextField1
-	 * 
-	 * @return javax.swing.JTextField
-	 */
-	private JTextField getCategoryName() {
-		if (categoryName == null) {
-			try {
-				categoryName = new JTextField();
-				categoryName.setEnabled(false);
-			} catch (java.lang.Throwable e) {
-				// TODO: Something
-			}
-		}
-		return categoryName;
-	}
-
 	private JTextField getJTextField2() {
 		if (jTextField2 == null) {
 			try {
@@ -774,61 +671,64 @@ public class MainServerGUI extends CascadingJFrame {
 		return jTextField2;
 	}
 
-	private JTextField getWaiterLastName() {
-		if (waiterLastName == null) {
-			waiterLastName = new JTextField();
-			waiterLastName.setEnabled(false);
-		}
-		return waiterLastName;
-	}
-
-	private JTextField getWaiterFirstName() {
-		if (waiterFirstName == null) {
-			waiterFirstName = new JTextField();
-			waiterFirstName.setEnabled(false);
-		}
-		return waiterFirstName;
-	}
-
 	/**
-	 * This method initializes this
+	 * This method initializes jPanel2
 	 * 
-	 * @return void
+	 * @return javax.swing.JPanel
 	 */
-	private void initialize() {
-		this.setSize(568, 429);
-		this.setJMenuBar(getJJMenuBar()); // Generated
-		this.setFont(new Font("Helvetica Neue", Font.PLAIN, 13)); // Generated
-		// this.setBackground(Color.gray); // Generated
-		this.setContentPane(getJTabbedPane1()); // Generated
-		this.setTitle("DineDroid Server");
-		refreshOrders();
-		refreshTables();
-		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-		WindowListener windowListener = new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				int confirm = JOptionPane.showConfirmDialog(null,
-						"Would you like to quit?", "Quit?",
-						JOptionPane.YES_NO_OPTION);
-				int confirmSave = JOptionPane.showConfirmDialog(null,
-						"Would you like to save?", "Save?",
-						JOptionPane.YES_NO_OPTION);
-				if (confirm == JOptionPane.YES_OPTION
-						&& confirmSave == JOptionPane.YES_OPTION) {
-					runSave();
-					System.exit(0);
-				}
-				if (confirm == JOptionPane.YES_OPTION
-						&& confirmSave == JOptionPane.NO_OPTION) {
-					System.exit(0);
-				} else {
-
-				}
+	private JPanel getMenuPanel() {
+		if (menuPanel == null) {
+			try {
+				GridBagConstraints gbc_addCategory = new GridBagConstraints();
+				gbc_addCategory.insets = new Insets(7, 2, 3, 112); // Generated
+				gbc_addCategory.gridy = 1; // Generated
+				gbc_addCategory.gridx = 1; // Generated
+				GridBagConstraints gridBagConstraints3 = new GridBagConstraints();
+				gridBagConstraints3.insets = new Insets(7, 100, 6, 157); // Generated
+				gridBagConstraints3.gridy = 1; // Generated
+				gridBagConstraints3.ipadx = 1; // Generated
+				gridBagConstraints3.ipady = 10; // Generated
+				gridBagConstraints3.gridx = 0; // Generated
+				GridBagConstraints gbc_categoryName = new GridBagConstraints();
+				gbc_categoryName.fill = GridBagConstraints.VERTICAL; // Generated
+				gbc_categoryName.gridx = 0; // Generated
+				gbc_categoryName.gridy = 1; // Generated
+				gbc_categoryName.ipadx = 142; // Generated
+				gbc_categoryName.ipady = -2; // Generated
+				gbc_categoryName.weightx = 1.0; // Generated
+				gbc_categoryName.insets = new Insets(7, 200, 6, 2); // Generated
+				GridBagConstraints gbc_addCategoryEnable = new GridBagConstraints();
+				gbc_addCategoryEnable.insets = new Insets(10, 195, 7, 186); // Generated
+				gbc_addCategoryEnable.gridx = 0; // Generated
+				gbc_addCategoryEnable.gridy = 0; // Generated
+				gbc_addCategoryEnable.ipadx = 37; // Generated
+				gbc_addCategoryEnable.ipady = -3; // Generated
+				gbc_addCategoryEnable.gridwidth = 2; // Generated
+				GridBagConstraints gridBagConstraints = new GridBagConstraints();
+				gridBagConstraints.fill = GridBagConstraints.BOTH; // Generated
+				gridBagConstraints.gridwidth = 2; // Generated
+				gridBagConstraints.gridx = 0; // Generated
+				gridBagConstraints.gridy = 2; // Generated
+				gridBagConstraints.ipadx = 276; // Generated
+				gridBagConstraints.ipady = 139; // Generated
+				gridBagConstraints.weightx = 1.0; // Generated
+				gridBagConstraints.weighty = 1.0; // Generated
+				gridBagConstraints.insets = new Insets(4, 5, 4, 6); // Generated
+				jLabel1 = new JLabel();
+				jLabel1.setText("Category Name:"); // Generated
+				jLabel1.setEnabled(false);
+				menuPanel = new JPanel();
+				menuPanel.setLayout(new GridBagLayout()); // Generated
+				menuPanel.add(getJScrollPane1(), gridBagConstraints); // Generated
+				menuPanel.add(getAddCategoryEnable(), gbc_addCategoryEnable); // Generated
+				menuPanel.add(getCategoryName(), gbc_categoryName); // Generated
+				menuPanel.add(jLabel1, gridBagConstraints3); // Generated
+				menuPanel.add(getAddCategory(), gbc_addCategory); // Generated
+			} catch (java.lang.Throwable e) {
+				// TODO: Something
 			}
-		};
-		this.addWindowListener(windowListener);
-		// this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+		}
+		return menuPanel;
 	}
 
 	private JMenu getMnNewMenu() {
@@ -865,6 +765,40 @@ public class MainServerGUI extends CascadingJFrame {
 			});
 		}
 		return mntmCreateTable;
+	}
+
+	/**
+	 * This method initializes jPanel1
+	 * 
+	 * @return javax.swing.JPanel
+	 */
+	private JPanel getOrderPanel() {
+		if (orderPanel == null) {
+			try {
+				GridBagConstraints gridBagConstraints6 = new GridBagConstraints();
+				gridBagConstraints6.insets = new Insets(6, 15, 4, 448); // Generated
+				gridBagConstraints6.gridy = 0; // Generated
+				gridBagConstraints6.ipadx = -10; // Generated
+				gridBagConstraints6.ipady = 11; // Generated
+				gridBagConstraints6.gridx = 0; // Generated
+				GridBagConstraints gridBagConstraints5 = new GridBagConstraints();
+				gridBagConstraints5.fill = GridBagConstraints.BOTH; // Generated
+				gridBagConstraints5.gridx = 0; // Generated
+				gridBagConstraints5.gridy = 1; // Generated
+				gridBagConstraints5.ipadx = 276; // Generated
+				gridBagConstraints5.ipady = 178; // Generated
+				gridBagConstraints5.weightx = 1.0; // Generated
+				gridBagConstraints5.weighty = 1.0; // Generated
+				gridBagConstraints5.insets = new Insets(4, 5, 4, 6); // Generated
+				orderPanel = new JPanel();
+				orderPanel.setLayout(new GridBagLayout()); // Generated
+				orderPanel.add(getJScrollPane2(), gridBagConstraints5); // Generated
+				// jPanel1.setBackground(Color.gray); // Generated
+			} catch (java.lang.Throwable e) {
+				// TODO: Something
+			}
+		}
+		return orderPanel;
 	}
 
 	private JPanel getTablesPanel() {
@@ -910,6 +844,137 @@ public class MainServerGUI extends CascadingJFrame {
 		return tablesPanel;
 	}
 
+	private JTextField getWaiterFirstName() {
+		if (waiterFirstName == null) {
+			waiterFirstName = new JTextField();
+			waiterFirstName.setEnabled(false);
+		}
+		return waiterFirstName;
+	}
+
+	private JTextField getWaiterLastName() {
+		if (waiterLastName == null) {
+			waiterLastName = new JTextField();
+			waiterLastName.setEnabled(false);
+		}
+		return waiterLastName;
+	}
+
+	private JPanel getWaiterPanel() {
+		if (waiterPanel == null) {
+			waiterPanel = new JPanel();
+			GridBagLayout gbl_waiterPanel = new GridBagLayout();
+			gbl_waiterPanel.columnWidths = new int[] { 0, 0, 0 };
+			gbl_waiterPanel.rowHeights = new int[] { 0, 0, 0, 0, 0 };
+			gbl_waiterPanel.columnWeights = new double[] { 1.0, 0.0,
+					Double.MIN_VALUE };
+			gbl_waiterPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0,
+					Double.MIN_VALUE };
+			waiterPanel.setLayout(gbl_waiterPanel);
+			GridBagConstraints gbc_addWaiterEnable = new GridBagConstraints();
+			gbc_addWaiterEnable.gridwidth = 2;
+			gbc_addWaiterEnable.ipady = -3;
+			gbc_addWaiterEnable.ipadx = 37;
+			gbc_addWaiterEnable.insets = new Insets(10, 195, 7, 186);
+			gbc_addWaiterEnable.gridx = 0;
+			gbc_addWaiterEnable.gridy = 0;
+			waiterPanel.add(getAddWaiterEnable(), gbc_addWaiterEnable);
+			GridBagConstraints gbc_jLabel2 = new GridBagConstraints();
+			gbc_jLabel2.ipady = 10;
+			gbc_jLabel2.ipadx = 1;
+			gbc_jLabel2.insets = new Insets(7, 100, 6, 157);
+			gbc_jLabel2.gridx = 0;
+			gbc_jLabel2.gridy = 1;
+			waiterPanel.add(getJLabel2(), gbc_jLabel2);
+			GridBagConstraints gbc_waiterFirstName = new GridBagConstraints();
+			gbc_waiterFirstName.weightx = 1.0;
+			gbc_waiterFirstName.ipady = -2;
+			gbc_waiterFirstName.ipadx = 142;
+			gbc_waiterFirstName.insets = new Insets(7, 200, 6, 5);
+			gbc_waiterFirstName.gridx = 0;
+			gbc_waiterFirstName.gridy = 1;
+			GridBagConstraints gbc_jLabel3 = new GridBagConstraints();
+			gbc_jLabel3.ipady = 10;
+			gbc_jLabel3.ipadx = 1;
+			gbc_jLabel3.insets = new Insets(7, 100, 6, 157);
+			gbc_jLabel3.gridx = 0;
+			gbc_jLabel3.gridy = 2;
+			waiterPanel.add(getJLabel3(), gbc_jLabel3);
+			waiterPanel.add(getWaiterFirstName(), gbc_waiterFirstName);
+			GridBagConstraints gbc_jTextField3 = new GridBagConstraints();
+			gbc_jTextField3.anchor = GridBagConstraints.EAST;
+			gbc_jTextField3.insets = new Insets(7, 2, 5, 112);
+			gbc_jTextField3.gridx = 1;
+			gbc_jTextField3.gridy = 2;
+			waiterPanel.add(getAddWaiterButton(), gbc_jTextField3);
+			GridBagConstraints gbc_waiterLastName = new GridBagConstraints();
+			gbc_waiterLastName.fill = GridBagConstraints.BOTH;
+			gbc_waiterLastName.weightx = 1.0;
+			gbc_waiterLastName.insets = new Insets(7, 200, 6, 5);
+			gbc_waiterLastName.gridx = 0;
+			gbc_waiterLastName.gridy = 2;
+			gbc_waiterLastName.ipady = 0;
+			gbc_waiterLastName.ipadx = 142;
+			waiterPanel.add(getWaiterLastName(), gbc_waiterLastName);
+			GridBagConstraints gbc_jScrollPane4 = new GridBagConstraints();
+			gbc_jScrollPane4.weighty = 1.0;
+			gbc_jScrollPane4.weightx = 1.0;
+			gbc_jScrollPane4.ipady = 139;
+			gbc_jScrollPane4.ipadx = 276;
+			gbc_jScrollPane4.insets = new Insets(4, 5, 4, 6);
+			gbc_jScrollPane4.fill = GridBagConstraints.BOTH;
+			gbc_jScrollPane4.gridwidth = 2;
+			gbc_jScrollPane4.gridx = 0;
+			gbc_jScrollPane4.gridy = 3;
+			waiterPanel.add(getJScrollPane4(), gbc_jScrollPane4);
+		}
+		return waiterPanel;
+	}
+
+	/**
+	 * This method initializes this
+	 * 
+	 * @return void
+	 */
+	private void initialize() {
+		this.setSize(568, 429);
+		this.setJMenuBar(getJJMenuBar()); // Generated
+		this.setFont(new Font("Helvetica Neue", Font.PLAIN, 13)); // Generated
+		// this.setBackground(Color.gray); // Generated
+		this.setContentPane(getJTabbedPane1()); // Generated
+		this.setTitle("DineDroid Server");
+		refreshOrders();
+		refreshTables();
+		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+		WindowListener windowListener = new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				int confirm = JOptionPane.showConfirmDialog(null,
+						"Would you like to quit?", "Quit?",
+						JOptionPane.YES_NO_OPTION);
+				int confirmSave = JOptionPane.showConfirmDialog(null,
+						"Would you like to save?", "Save?",
+						JOptionPane.YES_NO_OPTION);
+				if (confirm == JOptionPane.YES_OPTION
+						&& confirmSave == JOptionPane.YES_OPTION) {
+					runSave();
+					System.exit(0);
+				}
+				if (confirm == JOptionPane.YES_OPTION
+						&& confirmSave == JOptionPane.NO_OPTION) {
+					System.exit(0);
+				} else {
+
+				}
+			}
+		};
+		this.addWindowListener(windowListener);
+		// this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+	}
+
+	/**
+	 * Refresh the Menu Categories list after querying the MenuController
+	 */
 	private void refreshCategories() {
 		ArrayList<FoodItem> jListCategories = mc.getMenu().getItems();
 
@@ -922,6 +987,9 @@ public class MainServerGUI extends CascadingJFrame {
 		menuList.setListData(temp1);
 	}
 
+	/**
+	 * Refresh the orders list after querying the TableController
+	 */
 	private void refreshOrders() {
 		ArrayList<Order> jListCategories = new ArrayList<Order>();
 		for (Table t : tc.getAllTables()) {
@@ -937,21 +1005,9 @@ public class MainServerGUI extends CascadingJFrame {
 		orderList.setListData(temp1);
 	}
 
-	private void refreshWaiters() {
-		// TODO Auto-generated method stub
-		ArrayList<Waiter> jListCategories = new ArrayList<Waiter>();
-		for (Waiter w : wc.getAllWaiters()) {
-			jListCategories.add(w);
-		}
-		int get = jListCategories.size();
-		System.out.println(get);
-		final Waiter[] temp1 = new Waiter[get];
-		for (int i = 0; i < get; ++i) {
-			temp1[i] = jListCategories.get(i);
-		}
-		waiterList.setListData(temp1);
-	}
-
+	/**
+	 * Refresh the tables list after querying the TableController
+	 */
 	private void refreshTables() {
 		// TODO Auto-generated method stub
 		ArrayList<Table> jListCategories = new ArrayList<Table>();
@@ -967,63 +1023,30 @@ public class MainServerGUI extends CascadingJFrame {
 		tablesList.setListData(temp1);
 	}
 
+	/**
+	 * Refresh the waiters list after querying the WaiterController
+	 */
+	private void refreshWaiters() {
+		// TODO Auto-generated method stub
+		ArrayList<Waiter> jListCategories = new ArrayList<Waiter>();
+		for (Waiter w : wc.getAllWaiters()) {
+			jListCategories.add(w);
+		}
+		int get = jListCategories.size();
+		System.out.println(get);
+		final Waiter[] temp1 = new Waiter[get];
+		for (int i = 0; i < get; ++i) {
+			temp1[i] = jListCategories.get(i);
+		}
+		waiterList.setListData(temp1);
+	}
+
+	/**
+	 * Clean up and save the state
+	 */
 	public void runSave() {
 		mc.saveMenu();
 		tc.saveTables();
 		wc.saveIdCounter();
-	}
-
-	public void generateQR(String type, int id) {
-		String myCodeText = type+"||"+id;
-		int size = 125;
-		String fileType = "png";
-		try {
-			Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
-			hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
-			QRCodeWriter qrCodeWriter = new QRCodeWriter();
-			BitMatrix byteMatrix = qrCodeWriter.encode(myCodeText,
-					BarcodeFormat.QR_CODE, size, size, hintMap);
-			int CrunchifyWidth = byteMatrix.getWidth();
-			final BufferedImage image = new BufferedImage(CrunchifyWidth,
-					CrunchifyWidth, BufferedImage.TYPE_INT_RGB);
-			image.createGraphics();
-
-			Graphics2D graphics = (Graphics2D) image.getGraphics();
-			graphics.setColor(Color.WHITE);
-			graphics.fillRect(0, 0, CrunchifyWidth, CrunchifyWidth);
-			graphics.setColor(Color.BLACK);
-
-			for (int i = 0; i < CrunchifyWidth; i++) {
-				for (int j = 0; j < CrunchifyWidth; j++) {
-					if (byteMatrix.get(i, j)) {
-						graphics.fillRect(i, j, 1, 1);
-					}
-				}
-			}
-			// ImageIO.write(image, fileType, myFile);
-			CascadingJFrame frame = new CascadingJFrame("QR Code");
-			frame.getContentPane().setLayout(new FlowLayout());
-			frame.getContentPane().add(new JLabel(new ImageIcon(image)));
-			VectorButton print = new VectorButton();
-			print.setText("Print");
-			print.setForeground(Color.WHITE);
-			print.setFont(new Font("Helvetica Neue", Font.PLAIN, 13));
-			print.addActionListener(new ActionListener() {
-				
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					// TODO Auto-generated method stub
-					new Thread(new PrintActionListener(image)).start();
-				}
-			});
-			frame.getContentPane().add(print);
-			frame.setResizable(false);
-			frame.pack();
-			frame.setVisible(true);
-		} 
-		catch (WriterException e) {
-			e.printStackTrace();
-		}
-		System.out.println("\n\nYou have successfully created QR Code.");
 	}
 } // @jve:decl-index=0:visual-constraint="140,2"
