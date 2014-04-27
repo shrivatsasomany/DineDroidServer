@@ -92,7 +92,7 @@ public class HailCommunicationController implements Runnable
 		{
 			int waiterId = Integer.parseInt(commands[2]);
 			int tableId = Integer.parseInt(commands[3]);
-			Boolean result = main.wc.removeHail(Integer.parseInt(commands[2]), Integer.parseInt(commands[3]));
+			Boolean result = main.wc.removeHail(waiterId, tableId);
 			try {
 				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
 				out.flush();
@@ -110,5 +110,6 @@ public class HailCommunicationController implements Runnable
 			}
 		}
 	}
+	
 
 }

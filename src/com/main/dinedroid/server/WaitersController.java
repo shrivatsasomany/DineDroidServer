@@ -120,7 +120,7 @@ public class WaitersController implements Runnable
 	 * @param waiterId A waiter ID to remove from
 	 * @return true if waiter found and hail removed, false otherwise
 	 */
-	public synchronized boolean removeHail(int tableId, int waiterId)
+	public synchronized boolean removeHail(int waiterId, int tableId)
 	{
 		Waiter w = findWaiter(waiterId);
 		if(w != null)
@@ -157,9 +157,11 @@ public class WaitersController implements Runnable
 		Waiter w = findWaiter(waiterId);
 		if(w != null)
 		{
-			callChangedListeners("Waiter");
 			w.removeHail(tableId);
-			return (w.removeTable(tableId));
+			boolean result = (w.removeTable(tableId));
+			callChangedListeners("Waiter");
+			return result;
+			
 		}
 		else
 		{
