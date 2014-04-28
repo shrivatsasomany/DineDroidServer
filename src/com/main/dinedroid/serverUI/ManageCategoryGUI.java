@@ -349,8 +349,6 @@ public class ManageCategoryGUI extends CascadingJFrame {
 											"Name cannot be blank");
 								} else {
 									int id = mc.getLatestId();
-									givenCategory.addItem(new FoodItem(id,
-											name, price, false));
 									FoodItem temp = new FoodItem(id, name,
 											price, false);
 									temp.setAvailable(true);
