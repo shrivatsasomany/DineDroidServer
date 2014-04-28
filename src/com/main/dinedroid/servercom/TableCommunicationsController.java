@@ -272,6 +272,29 @@ public class TableCommunicationsController implements Runnable {
 				main.tc.setOrderStatus(tableId, oldStatus, oldNotes);
 			}
 		}
+		
+		/**
+		 * If the command is Get_Order_Status
+		 * To get the status of an order
+		 * Given a table ID
+		 * get the table using the table controller
+		 * return the OrderStatus to the connected client
+		 */
+		else if(commands[1].equals("Get_Order_Status"))
+		{
+			int tableId = Integer.parseInt(commands[2]);
+			Table t = main.tc.findTable(tableId);
+			try {
+				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
+				out.flush();
+				out.writeInt(t.getOrderStatus());
+				out.flush();
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		/**
 		 * If the command is Get_All_Tables
 		 * query the table controller for the list of all the tables
