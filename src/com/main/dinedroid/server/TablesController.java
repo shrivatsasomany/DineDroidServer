@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import com.main.dinedroid.menu.FoodItem;
 import com.main.dinedroid.models.Order;
 import com.main.dinedroid.models.Table;
+import com.main.dinedroid.models.Waiter;
 import com.main.dinedroid.serverlistener.TableChangeListener;
 
 public class TablesController implements Runnable {
@@ -24,8 +25,21 @@ public class TablesController implements Runnable {
 		// TODO Auto-generated method stub
 		tables = new ArrayList<Table>();
 		loadTables();
+		fixReferences();
 		loadKitchenIP();
 		System.err.println("Loaded " + tables.size() + " tables");
+	}
+	
+	public void fixReferences()
+	{
+		for(Table e:tables)
+		{
+			if(e.getWaiter()!=null)
+			{
+				Waiter w = main.wc.findWaiter(e.getWaiter().getId());
+				e.setWaiter(w);
+			}
+		}
 	}
 
 	/**

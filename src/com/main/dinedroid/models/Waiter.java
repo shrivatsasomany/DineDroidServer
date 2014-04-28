@@ -67,7 +67,7 @@ public class Waiter implements Serializable {
 	{
 		for(int i = 0; i < tables.size(); ++i)
 		{
-			if(tables.get(i).getId().equals(tableId))
+			if(tables.get(i).getId() == tableId)
 			{
 				tables.remove(i);
 				return true;
