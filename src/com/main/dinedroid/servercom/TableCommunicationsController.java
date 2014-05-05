@@ -206,6 +206,7 @@ public class TableCommunicationsController implements Runnable {
 				main.tc.setTableOrder(tableId, oldOrder);
 			}
 		}
+		
 		/**
 		 * If the command is Remove_Table_Order
 		 * To remove an order from a table without billing it. 
@@ -216,7 +217,7 @@ public class TableCommunicationsController implements Runnable {
 		{
 			int tableId = Integer.parseInt(commands[2]);
 			Order oldOrder = main.tc.findTable(tableId).getOrder(); //Returns null if table has no order or wasn't even open.
-			boolean result = main.tc.removeTableOrder(tableId);
+			boolean result = main.tc.closeTableOrder(tableId);
 			try {
 				ObjectOutputStream out = new ObjectOutputStream(mySocket.getOutputStream());
 				out.writeBoolean(result);
